@@ -53,7 +53,7 @@ python -m pip install --upgrade pip setuptools wheel
 ```
 Now install the required packages:
 ```bash
-pip install --pre -U langgraph langchain "langgraph-cli[inmem]" openai pandas numpy scikit-learn python-dotenv
+pip install -r requirements.txt
 ```
 These include:
 - `langgraph` → for building agentic workflows
@@ -73,16 +73,9 @@ LANGCHAIN_API_KEY=xxxxxxxxxxxxxxxxxxxx
 ```
 ⚠️ **Never push .env to GitHub!**
 
-### 6️⃣ Generate a requirements.txt
-```bash
-pip freeze > requirements.txt
-```
-Then others can install everything later with:
-```bash
-pip install -r requirements.txt
-```
 
-### 7️⃣ Create a .gitignore
+
+### 6️⃣ Create a .gitignore
 ```bash
 touch .gitignore
 ```
@@ -93,7 +86,7 @@ __pycache__/
 .env
 ```
 
-### 8️⃣ Commit and push
+### 7️⃣ Commit and push
 ```bash
 git add .
 git commit -m "Initial project setup with venv and dependencies"

@@ -34,6 +34,7 @@ class SentimentType(Enum):
 
 class EventType(Enum):
     """Customer event types."""
+    # Reactive Events (Customer-initiated)
     ORDER_PLACED = "order_placed"
     ORDER_DELAYED = "order_delayed"
     ORDER_CANCELLED = "order_cancelled"
@@ -41,6 +42,13 @@ class EventType(Enum):
     INQUIRY = "inquiry"
     FEEDBACK = "feedback"
     RETURN_REQUEST = "return_request"
+    
+    # Proactive Events (System-initiated)
+    PROACTIVE_RETENTION = "proactive_retention"  # Churn prevention outreach
+    PROACTIVE_UPSELL = "proactive_upsell"  # Personalized upgrade offer
+    PROACTIVE_CHECK_IN = "proactive_check_in"  # Wellness check for high-value customers
+    PROACTIVE_MILESTONE = "proactive_milestone"  # Celebrate customer milestones
+    PROACTIVE_FEEDBACK_REQUEST = "proactive_feedback_request"  # Request feedback proactively
 
 
 @dataclass
@@ -54,6 +62,15 @@ class Customer:
     lifetime_value: float
     preferred_category: str
     loyalty_tier: str
+    
+    # New fields from original dataset
+    phone: Optional[str] = None
+    signup_date: Optional[str] = None  # ISO format: YYYY-MM-DD
+    country: Optional[str] = None
+    avg_order_value: Optional[float] = None
+    last_active_date: Optional[str] = None  # ISO format: YYYY-MM-DD
+    opt_in_marketing: Optional[bool] = None
+    language: Optional[str] = None  # Language code: en, hi, ta, te, bn
     
     @property
     def full_name(self) -> str:
@@ -70,6 +87,44 @@ class Customer:
         """Check if customer has high lifetime value."""
         return self.lifetime_value > 5000
     
+    @property
+    def days_since_signup(self) -> Optional[int]:
+        """Calculate days since customer signup."""
+        if not self.signup_date:
+            return None
+        try:
+            signup = datetime.fromisoformat(self.signup_date)
+            return (datetime.now() - signup).days
+        except (ValueError, TypeError):
+            return None
+    
+    @property
+    def days_since_active(self) -> Optional[int]:
+        """Calculate days since last activity."""
+        if not self.last_active_date:
+            return None
+        try:
+            last_active = datetime.fromisoformat(self.last_active_date)
+            return (datetime.now() - last_active).days
+        except (ValueError, TypeError):
+            return None
+    
+    @property
+    def is_inactive(self) -> bool:
+        """Check if customer is inactive (>90 days since last activity)."""
+        days = self.days_since_active
+        return days is not None and days > 90
+    
+    @property
+    def is_high_spender(self) -> bool:
+        """Check if customer has high average order value."""
+        return self.avg_order_value is not None and self.avg_order_value > 70
+    
+    @property
+    def can_contact_marketing(self) -> bool:
+        """Check if customer opted in for marketing communications."""
+        return self.opt_in_marketing is True
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -80,7 +135,14 @@ class Customer:
             "segment": self.segment,
             "lifetime_value": self.lifetime_value,
             "preferred_category": self.preferred_category,
-            "loyalty_tier": self.loyalty_tier
+            "loyalty_tier": self.loyalty_tier,
+            "phone": self.phone,
+            "signup_date": self.signup_date,
+            "country": self.country,
+            "avg_order_value": self.avg_order_value,
+            "last_active_date": self.last_active_date,
+            "opt_in_marketing": self.opt_in_marketing,
+            "language": self.language
         }
 
 
@@ -94,6 +156,18 @@ class CustomerEvent:
     description: str
     metadata: Dict[str, Any] = field(default_factory=dict)
     
+    @property
+    def is_proactive(self) -> bool:
+        """Check if this is a proactive (system-initiated) event."""
+        proactive_types = [
+            EventType.PROACTIVE_RETENTION,
+            EventType.PROACTIVE_UPSELL,
+            EventType.PROACTIVE_CHECK_IN,
+            EventType.PROACTIVE_MILESTONE,
+            EventType.PROACTIVE_FEEDBACK_REQUEST
+        ]
+        return self.event_type in proactive_types
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -102,7 +176,8 @@ class CustomerEvent:
             "event_type": self.event_type.value,
             "timestamp": self.timestamp.isoformat(),
             "description": self.description,
-            "metadata": self.metadata
+            "metadata": self.metadata,
+            "is_proactive": self.is_proactive
         }
 
 

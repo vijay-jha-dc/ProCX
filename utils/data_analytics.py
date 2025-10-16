@@ -16,22 +16,83 @@ class DataAnalytics:
     - Analyze customer segment behaviors
     - Historical pattern matching
     - Churn risk calculation based on actual data
+    - Multi-sheet data integration (orders, churn_labels, support_tickets, etc.)
     """
     
     def __init__(self, dataset_path: Optional[Path] = None):
-        """Initialize with customer dataset."""
+        """Initialize with customer dataset and load critical sheets."""
         self.dataset_path = dataset_path or settings.DATASET_PATH
-        self.df = None
+        self.df = None  # customers sheet
+        self.orders_df = None
+        self.churn_labels_df = None
+        self.support_tickets_df = None
+        self.nps_survey_df = None
+        
         self.load_dataset()
     
     def load_dataset(self):
-        """Load the customer dataset."""
+        """Load the customer dataset and critical sheets."""
         try:
-            self.df = pd.read_excel(self.dataset_path)
-            print(f"✓ DataAnalytics: Loaded {len(self.df)} customers for analysis")
+            # Determine if this is a multi-sheet file or single-sheet optimized file
+            xl = pd.ExcelFile(self.dataset_path)
+            
+            if 'customers' in xl.sheet_names:
+                # Multi-sheet file (original dataset)
+                self.df = pd.read_excel(self.dataset_path, sheet_name='customers')
+                print(f"[OK] DataAnalytics: Loaded {len(self.df)} customers for analysis")
+                
+                # Load critical sheets for enhanced analysis
+                self._load_orders()
+                self._load_churn_labels()
+            else:
+                # Single-sheet file (optimized dataset)
+                self.df = pd.read_excel(self.dataset_path)
+                print(f"[OK] DataAnalytics: Loaded {len(self.df)} customers for analysis")
+                print(f"  Note: Using optimized dataset (single sheet). Multi-sheet features unavailable.")
+            
         except Exception as e:
-            print(f"✗ DataAnalytics: Error loading dataset: {e}")
+            print(f"X DataAnalytics: Error loading dataset: {e}")
             self.df = None
+    
+    def _load_orders(self):
+        """Load orders sheet for purchase behavior analysis."""
+        try:
+            self.orders_df = pd.read_excel(self.dataset_path, sheet_name='orders')
+            print(f"[OK] DataAnalytics: Loaded {len(self.orders_df)} orders")
+        except Exception as e:
+            print(f"  [WARN]  Orders sheet not available: {e}")
+            self.orders_df = None
+    
+    def _load_churn_labels(self):
+        """Load churn labels for ground truth validation."""
+        try:
+            self.churn_labels_df = pd.read_excel(self.dataset_path, sheet_name='churn_labels')
+            print(f"[OK] DataAnalytics: Loaded {len(self.churn_labels_df)} churn labels")
+        except Exception as e:
+            print(f"  [WARN]  Churn labels sheet not available: {e}")
+            self.churn_labels_df = None
+    
+    def _load_support_tickets(self):
+        """Lazy load support tickets when needed."""
+        if self.support_tickets_df is None:
+            try:
+                self.support_tickets_df = pd.read_excel(self.dataset_path, sheet_name='support_tickets')
+                print(f"[OK] DataAnalytics: Loaded {len(self.support_tickets_df)} support tickets")
+            except Exception as e:
+                print(f"  [WARN]  Support tickets sheet not available: {e}")
+                self.support_tickets_df = None
+        return self.support_tickets_df
+    
+    def _load_nps_survey(self):
+        """Lazy load NPS survey when needed."""
+        if self.nps_survey_df is None:
+            try:
+                self.nps_survey_df = pd.read_excel(self.dataset_path, sheet_name='nps_survey')
+                print(f"[OK] DataAnalytics: Loaded {len(self.nps_survey_df)} NPS surveys")
+            except Exception as e:
+                print(f"  [WARN]  NPS survey sheet not available: {e}")
+                self.nps_survey_df = None
+        return self.nps_survey_df
     
     def find_similar_customers(
         self,
@@ -122,7 +183,7 @@ class DataAnalytics:
         if len(segment_df) == 0:
             return {}
         
-        return {
+        stats = {
             'segment': segment,
             'total_customers': len(segment_df),
             'avg_lifetime_value': float(segment_df['lifetime_value'].mean()),
@@ -133,6 +194,22 @@ class DataAnalytics:
             'top_categories': segment_df['preferred_category'].value_counts().head(3).to_dict(),
             'percentage_of_total': (len(segment_df) / len(self.df)) * 100
         }
+        
+        # Add new field statistics if available
+        if 'avg_order_value' in segment_df.columns:
+            stats['avg_order_value'] = float(segment_df['avg_order_value'].mean())
+            stats['median_order_value'] = float(segment_df['avg_order_value'].median())
+        
+        if 'country' in segment_df.columns:
+            stats['country_distribution'] = segment_df['country'].value_counts().to_dict()
+        
+        if 'language' in segment_df.columns:
+            stats['language_distribution'] = segment_df['language'].value_counts().to_dict()
+        
+        if 'opt_in_marketing' in segment_df.columns:
+            stats['opt_in_rate'] = float(segment_df['opt_in_marketing'].sum() / len(segment_df) * 100)
+        
+        return stats
     
     def calculate_churn_risk(self, customer: Customer, state: AgentState) -> float:
         """
@@ -311,4 +388,156 @@ class DataAnalytics:
             'customer_percentile': percentile,
             'above_average': customer.lifetime_value > cohort_avg_ltv,
             'ltv_difference': customer.lifetime_value - cohort_avg_ltv
+        }
+
+    
+    def get_customer_order_stats(self, customer: Customer) -> Dict[str, Any]:
+        """
+        Get order statistics for a customer.
+        
+        Args:
+            customer: Customer object
+            
+        Returns:
+            Dictionary with order metrics (frequency, recency, total orders, etc.)
+        """
+        if self.orders_df is None:
+            return {}
+        
+        customer_orders = self.orders_df[self.orders_df['customer_id'] == customer.customer_id]
+        
+        if len(customer_orders) == 0:
+            return {
+                'total_orders': 0,
+                'order_frequency': 0,
+                'days_since_last_order': None,
+                'avg_order_amount': 0
+            }
+        
+        # Convert order_date to datetime if needed
+        if 'order_date' in customer_orders.columns:
+            customer_orders['order_date'] = pd.to_datetime(customer_orders['order_date'])
+            last_order_date = customer_orders['order_date'].max()
+            days_since_last = (pd.Timestamp.now() - last_order_date).days
+        else:
+            days_since_last = None
+        
+        stats = {
+            'total_orders': len(customer_orders),
+            'order_frequency': len(customer_orders) / max(1, customer.days_since_signup or 365) * 30,  # Orders per month
+            'days_since_last_order': days_since_last,
+            'avg_order_amount': float(customer_orders['total_amount'].mean()) if 'total_amount' in customer_orders.columns else customer.avg_order_value
+        }
+        
+        # Order status distribution
+        if 'order_status' in customer_orders.columns:
+            stats['status_distribution'] = customer_orders['order_status'].value_counts().to_dict()
+        
+        return stats
+    
+    def get_actual_churn_status(self, customer: Customer) -> Optional[Dict[str, Any]]:
+        """
+        Get actual churn status and reason from churn_labels sheet.
+        
+        Args:
+            customer: Customer object
+            
+        Returns:
+            Dictionary with churn status, date, reason, and predicted score
+        """
+        if self.churn_labels_df is None:
+            return None
+        
+        churn_data = self.churn_labels_df[
+            self.churn_labels_df['customer_id'] == customer.customer_id
+        ]
+        
+        if len(churn_data) == 0:
+            return None
+        
+        row = churn_data.iloc[0]
+        
+        return {
+            'is_churned': bool(row['is_churn']) if pd.notna(row['is_churn']) else False,
+            'churn_date': str(row['churn_date']) if pd.notna(row.get('churn_date')) else None,
+            'churn_reason': str(row['churn_reason']) if pd.notna(row.get('churn_reason')) else None,
+            'predicted_churn_score': float(row['predicted_churn_score']) if pd.notna(row['predicted_churn_score']) else 0.0
+        }
+    
+    def get_customer_support_history(self, customer: Customer) -> Dict[str, Any]:
+        """
+        Get support ticket history for a customer.
+        
+        Args:
+            customer: Customer object
+            
+        Returns:
+            Dictionary with ticket count, avg sentiment, resolution time, etc.
+        """
+        tickets_df = self._load_support_tickets()
+        
+        if tickets_df is None:
+            return {}
+        
+        customer_tickets = tickets_df[tickets_df['customer_id'] == customer.customer_id]
+        
+        if len(customer_tickets) == 0:
+            return {
+                'total_tickets': 0,
+                'open_tickets': 0,
+                'avg_csat': None
+            }
+        
+        stats = {
+            'total_tickets': len(customer_tickets),
+            'open_tickets': len(customer_tickets[customer_tickets['status'] == 'open']) if 'status' in customer_tickets.columns else 0
+        }
+        
+        # CSAT scores
+        if 'csat_score' in customer_tickets.columns:
+            csat_scores = customer_tickets['csat_score'].dropna()
+            if len(csat_scores) > 0:
+                stats['avg_csat'] = float(csat_scores.mean())
+                stats['min_csat'] = float(csat_scores.min())
+        
+        # Priority distribution
+        if 'priority' in customer_tickets.columns:
+            stats['priority_distribution'] = customer_tickets['priority'].value_counts().to_dict()
+        
+        return stats
+    
+    def get_customer_nps(self, customer: Customer) -> Optional[Dict[str, Any]]:
+        """
+        Get NPS survey data for a customer.
+        
+        Args:
+            customer: Customer object
+            
+        Returns:
+            Dictionary with latest NPS score and feedback
+        """
+        nps_df = self._load_nps_survey()
+        
+        if nps_df is None:
+            return None
+        
+        customer_nps = nps_df[nps_df['customer_id'] == customer.customer_id]
+        
+        if len(customer_nps) == 0:
+            return None
+        
+        # Get latest NPS
+        if 'date' in customer_nps.columns:
+            customer_nps['date'] = pd.to_datetime(customer_nps['date'])
+            latest = customer_nps.sort_values('date', ascending=False).iloc[0]
+        else:
+            latest = customer_nps.iloc[-1]
+        
+        nps_score = int(latest['nps_score']) if pd.notna(latest['nps_score']) else None
+        
+        return {
+            'nps_score': nps_score,
+            'nps_category': 'promoter' if nps_score and nps_score >= 9 else ('passive' if nps_score and nps_score >= 7 else 'detractor'),
+            'feedback_text': str(latest['feedback_text']) if pd.notna(latest.get('feedback_text')) else None,
+            'survey_count': len(customer_nps)
         }

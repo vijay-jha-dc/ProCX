@@ -244,3 +244,119 @@ def stream_workflow(workflow, initial_state: AgentState):
     """
     for step in workflow.stream({"state": initial_state}):
         yield step
+
+
+def create_proactive_workflow():
+    """
+    Create a PROACTIVE workflow optimized for preventive customer engagement.
+    
+    This workflow is designed for:
+    - Proactive churn prevention
+    - Customer health monitoring
+    - Preventive retention campaigns
+    - Predictive intervention
+    
+    Key differences from reactive workflow:
+    - Focuses on FUTURE behavior prediction
+    - Emphasizes intervention timing
+    - Generates preventive action plans
+    - Optimized for batch processing
+    
+    Returns:
+        Compiled LangGraph workflow for proactive engagement
+    """
+    
+    # Create agent instances
+    context_agent = create_context_agent()
+    pattern_agent = create_pattern_agent()
+    decision_agent = create_decision_agent()
+    empathy_agent = create_empathy_agent()
+    
+    # Define workflow nodes for proactive processing
+    def proactive_context_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Context analysis for proactive events.
+        Focuses on customer health rather than immediate sentiment.
+        """
+        agent_state: AgentState = state["state"]
+        
+        # For proactive events, set baseline context
+        if agent_state.event and hasattr(agent_state.event, 'is_proactive') and agent_state.event.is_proactive:
+            agent_state.add_message("proactive_workflow", "Processing proactive intervention")
+        
+        updated_state = context_agent(agent_state)
+        return {"state": updated_state}
+    
+    def proactive_pattern_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Pattern analysis for proactive events.
+        Emphasizes future predictions and intervention windows.
+        """
+        agent_state: AgentState = state["state"]
+        
+        # Enhanced pattern analysis with proactive predictions
+        updated_state = pattern_agent(agent_state)
+        
+        # Add proactive-specific insights
+        if agent_state.event and hasattr(agent_state.event, 'is_proactive') and agent_state.event.is_proactive:
+            updated_state.add_message(
+                "proactive_workflow",
+                f"Proactive churn risk: {updated_state.predicted_churn_risk:.2%}"
+            )
+        
+        return {"state": updated_state}
+    
+    def proactive_decision_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Decision making for proactive interventions.
+        Focuses on WHEN and HOW to reach out.
+        """
+        agent_state: AgentState = state["state"]
+        updated_state = decision_agent(agent_state)
+        
+        # Adjust priority for proactive events
+        if agent_state.event and hasattr(agent_state.event, 'is_proactive') and agent_state.event.is_proactive:
+            # Proactive events are typically medium priority unless high churn risk
+            if updated_state.predicted_churn_risk and updated_state.predicted_churn_risk >= 0.7:
+                updated_state.priority_level = "high"
+                updated_state.add_message("proactive_workflow", "High churn risk - elevated priority")
+            elif not updated_state.priority_level or updated_state.priority_level == "low":
+                updated_state.priority_level = "medium"
+        
+        return {"state": updated_state}
+    
+    def proactive_empathy_node(state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Response generation for proactive outreach.
+        Tone is more positive and forward-looking.
+        """
+        agent_state: AgentState = state["state"]
+        
+        # Set proactive tone
+        if agent_state.event and hasattr(agent_state.event, 'is_proactive') and agent_state.event.is_proactive:
+            agent_state.add_message(
+                "proactive_workflow",
+                "Generating proactive, forward-looking message"
+            )
+        
+        updated_state = empathy_agent(agent_state)
+        return {"state": updated_state}
+    
+    # Create the graph
+    workflow = StateGraph(WorkflowState)
+    
+    # Add nodes
+    workflow.add_node("proactive_context", proactive_context_node)
+    workflow.add_node("proactive_pattern", proactive_pattern_node)
+    workflow.add_node("proactive_decision", proactive_decision_node)
+    workflow.add_node("proactive_empathy", proactive_empathy_node)
+    
+    # Define edges (sequential flow optimized for proactive)
+    workflow.set_entry_point("proactive_context")
+    workflow.add_edge("proactive_context", "proactive_pattern")
+    workflow.add_edge("proactive_pattern", "proactive_decision")
+    workflow.add_edge("proactive_decision", "proactive_empathy")
+    workflow.add_edge("proactive_empathy", END)
+    
+    # Compile the graph
+    return workflow.compile()

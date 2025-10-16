@@ -449,3 +449,31 @@ Expected output:
 ---
 
 **You now have a genuinely data-driven AI system!** 🏆
+
+
+---
+
+
+## Discovery: Rich Dataset Structure
+
+The Excel file contains **18 sheets** with comprehensive customer journey data:
+- customers (1000)
+- orders (5000) 
+- support_tickets (2000)
+- customer_events (10000)
+- churn_labels (1000) - **GROUND TRUTH/c/Users/PiyushYadav/Documents/AgentMax/ProCX && .venv/Scripts/python.exe check_excel_sheets.py*
+- nps_survey (800)
+- payments, shipments, refunds, and more...
+
+## Priority Integration Plan
+
+### Phase 1 (Step 3): ProactiveMonitor Enhancement
+**Add:** churn_labels, orders
+**Why:** Real churn data + purchase behavior = accurate risk scoring
+
+### Phase 2 (Steps 4-6): Agent Intelligence  
+**Add:** support_tickets, customer_events, nps_survey
+**Why:** Full context for Pattern/Empathy/Decision agents
+
+### Phase 3 (Steps 7-8): Multi-channel + Testing
+**Add:** Comprehensive validation with all data sources

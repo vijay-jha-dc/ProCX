@@ -28,7 +28,10 @@ from .models import (
 
 from .utils import (
     EventSimulator,
-    MemoryHandler
+    MemoryHandler,
+    DataAnalytics,
+    ProactiveMonitor,
+    ProactiveRunner
 )
 
 __all__ = [
@@ -49,5 +52,8 @@ __all__ = [
     "SentimentType",
     # Utils
     "EventSimulator",
-    "MemoryHandler"
+    "MemoryHandler",
+    "DataAnalytics",
+    "ProactiveMonitor",
+    "ProactiveRunner"
 ]

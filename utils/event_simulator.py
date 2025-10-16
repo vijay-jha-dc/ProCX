@@ -33,9 +33,9 @@ class EventSimulator:
         """Load customer data from dataset."""
         try:
             self.customers_df = pd.read_excel(self.dataset_path)
-            print(f"✓ Loaded {len(self.customers_df)} customers")
+            print(f"[OK] Loaded {len(self.customers_df)} customers")
         except Exception as e:
-            print(f"✗ Error loading customers: {e}")
+            print(f"[ERROR] Error loading customers: {e}")
             self.customers_df = None
     
     def get_random_customer(self, segment: Optional[str] = None) -> Optional[Customer]:
@@ -68,7 +68,15 @@ class EventSimulator:
             segment=row["segment"],
             lifetime_value=float(row["lifetime_value"]),
             preferred_category=row["preferred_category"],
-            loyalty_tier=row["loyalty_tier"]
+            loyalty_tier=row["loyalty_tier"],
+            # New fields from original dataset
+            phone=str(row["phone"]) if pd.notna(row.get("phone")) else None,
+            signup_date=str(row["signup_date"]) if pd.notna(row.get("signup_date")) else None,
+            country=str(row["country"]) if pd.notna(row.get("country")) else None,
+            avg_order_value=float(row["avg_order_value"]) if pd.notna(row.get("avg_order_value")) else None,
+            last_active_date=str(row["last_active_date"]) if pd.notna(row.get("last_active_date")) else None,
+            opt_in_marketing=bool(row["opt_in_marketing"]) if pd.notna(row.get("opt_in_marketing")) else None,
+            language=str(row["language"]) if pd.notna(row.get("language")) else None
         )
     
     def get_customer_by_id(self, customer_id: str) -> Optional[Customer]:
@@ -99,7 +107,15 @@ class EventSimulator:
             segment=row["segment"],
             lifetime_value=float(row["lifetime_value"]),
             preferred_category=row["preferred_category"],
-            loyalty_tier=row["loyalty_tier"]
+            loyalty_tier=row["loyalty_tier"],
+            # New fields from original dataset
+            phone=str(row["phone"]) if pd.notna(row.get("phone")) else None,
+            signup_date=str(row["signup_date"]) if pd.notna(row.get("signup_date")) else None,
+            country=str(row["country"]) if pd.notna(row.get("country")) else None,
+            avg_order_value=float(row["avg_order_value"]) if pd.notna(row.get("avg_order_value")) else None,
+            last_active_date=str(row["last_active_date"]) if pd.notna(row.get("last_active_date")) else None,
+            opt_in_marketing=bool(row["opt_in_marketing"]) if pd.notna(row.get("opt_in_marketing")) else None,
+            language=str(row["language"]) if pd.notna(row.get("language")) else None
         )
     
     def generate_event(

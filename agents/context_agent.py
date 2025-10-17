@@ -4,8 +4,7 @@ Context Agent - Analyzes customer events and extracts contextual information.
 import json
 from typing import Dict, Any
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+from langchain_core.prompts import PromptTemplate
 
 from models import AgentState, SentimentType
 from config.prompts import SYSTEM_PROMPTS
@@ -32,17 +31,6 @@ class ContextAgent:
             model=self.model_name,
             temperature=self.temperature,
             openai_api_key=settings.OPENAI_API_KEY
-        )
-        
-        # Setup output parser
-        self.response_schemas = [
-            ResponseSchema(name="sentiment", description="Sentiment classification"),
-            ResponseSchema(name="urgency_level", description="Urgency level 1-5"),
-            ResponseSchema(name="customer_risk_score", description="Risk score 0-1"),
-            ResponseSchema(name="context_summary", description="Context summary")
-        ]
-        self.output_parser = StructuredOutputParser.from_response_schemas(
-            self.response_schemas
         )
         
         # Initialize data analytics for context enrichment

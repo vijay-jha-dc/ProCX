@@ -86,44 +86,134 @@ class PatternAgent:
     
     def _get_similar_patterns(self, state: AgentState) -> str:
         """
-        Get similar customer patterns using REAL dataset similarity matching.
+        🎯 DUAL-LAYER PATTERN MATCHING (ENHANCED!)
+        
+        Layer 1: Similar CUSTOMERS (profile-based)
+        Layer 2: Similar ISSUES (problem-based) ← NEW!
+        
+        This gives us BOTH "who else is like this customer" AND 
+        "how did we solve this type of problem before"
         """
         patterns = []
         
-        # Find similar customers from actual dataset
+        # ========== LAYER 1: SIMILAR CUSTOMERS ==========
         similar_customers = self.analytics.find_similar_customers(state.customer, limit=5)
         
         if similar_customers:
-            patterns.append("SIMILAR CUSTOMERS FROM DATABASE:")
-            patterns.append(f"  Found {len(similar_customers)} similar customers based on profile matching")
+            patterns.append("=" * 70)
+            patterns.append("🔍 LAYER 1: SIMILAR CUSTOMER PROFILES")
+            patterns.append("=" * 70)
+            patterns.append(f"Found {len(similar_customers)} customers with similar profiles:\n")
             
             for i, similar in enumerate(similar_customers[:3], 1):
-                patterns.append(f"\n  Similar Customer #{i}:")
+                patterns.append(f"  Customer #{i}:")
                 patterns.append(f"    - ID: {similar['customer_id']}, {similar['segment']} segment")
                 patterns.append(f"    - LTV: ${similar['lifetime_value']:.2f}, {similar['loyalty_tier']} tier")
                 patterns.append(f"    - Similarity: {similar['similarity_score']:.2%}")
-                patterns.append(f"    - Match reasons: {', '.join(similar['similarity_reasons'][:2])}")
+                patterns.append(f"    - Match reasons: {', '.join(similar['similarity_reasons'][:2])}\n")
         
-        # Get behavioral patterns for this segment from actual data
+        # ========== LAYER 2: SIMILAR ISSUES (NEW!) ==========
+        if state.event:
+            event_desc = state.event.description if hasattr(state.event, 'description') else ""
+            event_type = state.event.event_type.value if hasattr(state.event, 'event_type') else "inquiry"
+            
+            # Find similar historical issues from support_tickets
+            similar_issues = self.analytics.find_similar_issues(
+                event_description=event_desc,
+                event_type=event_type,
+                customer_segment=state.customer.segment,
+                limit=10
+            )
+            
+            if similar_issues:
+                patterns.append("\n" + "=" * 70)
+                patterns.append("🎯 LAYER 2: SIMILAR HISTORICAL ISSUES (INTELLIGENT MATCHING!)")
+                patterns.append("=" * 70)
+                patterns.append(f"Found {len(similar_issues)} similar past issues in support tickets:\n")
+                
+                # Show top 3 most similar issues
+                for i, issue in enumerate(similar_issues[:3], 1):
+                    patterns.append(f"  Issue #{i} (Similarity: {issue['similarity_score']:.1%}):")
+                    patterns.append(f"    - Ticket: {issue['ticket_id']}, {issue['segment']} customer")
+                    patterns.append(f"    - Problem: {issue['issue_description'][:80]}...")
+                    patterns.append(f"    - Resolution: {str(issue['resolution'])[:60]}...")
+                    patterns.append(f"    - Outcome: {issue['csat_score']:.1f}/5 CSAT ({issue['effectiveness']})")
+                    patterns.append(f"    - Keywords matched: {', '.join(issue['matched_keywords'][:3])}\n")
+                
+                # ========== RESOLUTION EFFECTIVENESS ANALYSIS ==========
+                effectiveness = self.analytics.get_resolution_effectiveness_analysis(
+                    similar_issues,
+                    state.customer.segment
+                )
+                
+                patterns.append("\n" + "=" * 70)
+                patterns.append("📊 RESOLUTION EFFECTIVENESS ANALYSIS")
+                patterns.append("=" * 70)
+                patterns.append(f"Historical Success Rate:")
+                patterns.append(f"  ✅ Excellent resolutions: {effectiveness['excellent_resolutions']}")
+                patterns.append(f"  👍 Good resolutions: {effectiveness['good_resolutions']}")
+                patterns.append(f"  👎 Poor resolutions: {effectiveness['poor_resolutions']}")
+                patterns.append(f"  📈 Average CSAT: {effectiveness['avg_csat_historical']:.1f}/5")
+                patterns.append(f"  ⏱️  Average resolution time: {effectiveness['avg_resolution_time']:.1f} hours")
+                
+                patterns.append(f"\n🎯 SMART RECOMMENDATION:")
+                patterns.append(f"  {effectiveness['recommendation']}")
+                
+                # Show best practices
+                if effectiveness['best_practices']:
+                    patterns.append(f"\n✨ PROVEN SOLUTIONS (What worked before):")
+                    for bp in effectiveness['best_practices']:
+                        patterns.append(
+                            f"  → {bp['resolution_type']} "
+                            f"({bp['success_count']} successes, {bp['avg_csat']:.1f}/5 CSAT)"
+                        )
+                
+                # Show what to avoid
+                if effectiveness['avoid_patterns']:
+                    patterns.append(f"\n⚠️  AVOID THESE (What failed before):")
+                    for ap in effectiveness['avoid_patterns']:
+                        patterns.append(
+                            f"  ✗ {ap['resolution']} "
+                            f"(resulted in {ap['csat']:.1f}/5 CSAT for {ap['segment']})"
+                        )
+            else:
+                patterns.append("\n" + "=" * 70)
+                patterns.append("🎯 LAYER 2: SIMILAR HISTORICAL ISSUES")
+                patterns.append("=" * 70)
+                patterns.append("  No directly matching historical issues found.")
+                patterns.append("  Using general best practices for this event type.\n")
+        
+        # ========== SEGMENT BEHAVIORAL PATTERNS ==========
         segment_patterns = self.analytics.get_segment_behavioral_patterns(state.customer.segment)
         if segment_patterns:
-            patterns.append(f"\nSEGMENT BEHAVIORAL PATTERNS ({state.customer.segment}):")
+            patterns.append("\n" + "=" * 70)
+            patterns.append(f"📈 SEGMENT BEHAVIORAL PATTERNS ({state.customer.segment})")
+            patterns.append("=" * 70)
             for pattern in segment_patterns:
                 patterns.append(f"  - {pattern}")
         
-        # Event-specific insights
+        # ========== EVENT TYPE INSIGHTS ==========
         if state.event:
             event_type = state.event.event_type.value
-            patterns.append(f"\nEVENT TYPE INSIGHTS ({event_type}):")
-            if "delay" in event_type or "cancel" in event_type:
+            patterns.append(f"\n" + "=" * 70)
+            patterns.append(f"💡 GENERAL EVENT TYPE INSIGHTS ({event_type})")
+            patterns.append("=" * 70)
+            if "delay" in event_type.lower() or "delivery" in event_type.lower():
                 patterns.append("  - Delivery issues correlate with 30-40% churn risk increase")
                 patterns.append("  - Requires immediate action and compensation")
-            elif "complaint" in event_type:
+                patterns.append("  - VIPs expect expedited resolution")
+            elif "complaint" in event_type.lower():
                 patterns.append("  - Unresolved complaints have 50%+ churn risk")
                 patterns.append("  - Fast resolution critical for retention")
-            elif "return" in event_type:
+                patterns.append("  - First complaint is opportunity to build trust")
+            elif "return" in event_type.lower() or "refund" in event_type.lower():
                 patterns.append("  - Return requests indicate product/expectation mismatch")
                 patterns.append("  - Opportunity to understand customer needs better")
+                patterns.append("  - Easy refund process builds long-term loyalty")
+            elif "inquiry" in event_type.lower():
+                patterns.append("  - Questions indicate engagement - positive signal")
+                patterns.append("  - Helpful responses drive future purchases")
+                patterns.append("  - Upsell opportunity if handled well")
         
         return "\n".join(patterns)
     

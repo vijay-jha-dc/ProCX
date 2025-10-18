@@ -2,11 +2,15 @@
 Data Analytics Utility - Real dataset analysis for pattern recognition.
 """
 import pandas as pd
+import warnings
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 from models import Customer, AgentState
 from config import settings
+
+# Suppress pandas warnings for cleaner output
+warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
 
 
 class DataAnalytics:
@@ -17,18 +21,35 @@ class DataAnalytics:
     - Historical pattern matching
     - Churn risk calculation based on actual data
     - Multi-sheet data integration (orders, churn_labels, support_tickets, etc.)
+    
+    Implements singleton pattern to avoid reloading data multiple times.
     """
     
+    _instance = None
+    _initialized = False
+    
+    def __new__(cls, dataset_path: Optional[Path] = None):
+        """Singleton pattern - only create one instance."""
+        if cls._instance is None:
+            cls._instance = super(DataAnalytics, cls).__new__(cls)
+        return cls._instance
+    
     def __init__(self, dataset_path: Optional[Path] = None):
-        """Initialize with customer dataset and load critical sheets."""
+        """Initialize with customer dataset and load critical sheets (only once)."""
+        # Only initialize once
+        if DataAnalytics._initialized:
+            return
+            
         self.dataset_path = dataset_path or settings.DATASET_PATH
         self.df = None  # customers sheet
         self.orders_df = None
         self.churn_labels_df = None
         self.support_tickets_df = None
         self.nps_survey_df = None
+        self.payments_df = None  # NEW: for payment analysis
         
         self.load_dataset()
+        DataAnalytics._initialized = True
     
     def load_dataset(self):
         """Load the customer dataset and critical sheets."""
@@ -93,6 +114,293 @@ class DataAnalytics:
                 print(f"  [WARN]  NPS survey sheet not available: {e}")
                 self.nps_survey_df = None
         return self.nps_survey_df
+    
+    def _load_payments(self):
+        """Lazy load payments sheet when needed."""
+        if self.payments_df is None:
+            try:
+                self.payments_df = pd.read_excel(self.dataset_path, sheet_name='payments')
+                print(f"[OK] DataAnalytics: Loaded {len(self.payments_df)} payments")
+            except Exception as e:
+                print(f"  [WARN]  Payments sheet not available: {e}")
+                self.payments_df = None
+        return self.payments_df
+    
+    def find_similar_issues(
+        self,
+        event_description: str,
+        event_type: str,
+        customer_segment: str,
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        🎯 INTELLIGENT ISSUE-BASED PATTERN MATCHING
+        
+        Find similar historical issues from support_tickets sheet and analyze:
+        - What solutions worked (high CSAT)
+        - What solutions failed (low CSAT)
+        - Segment-specific patterns
+        - Resolution effectiveness
+        
+        This is NOT just customer matching - it's ISSUE matching!
+        
+        Args:
+            event_description: Current issue description
+            event_type: Type of event (complaint, inquiry, etc.)
+            customer_segment: Customer's segment (VIP, Loyal, etc.)
+            limit: Max number of similar issues to return
+            
+        Returns:
+            List of similar historical issues with outcomes
+        """
+        tickets = self._load_support_tickets()
+        if tickets is None or len(tickets) == 0:
+            return []
+        
+        # Extract keywords from current issue (simple but effective)
+        keywords = self._extract_issue_keywords(event_description, event_type)
+        
+        if not keywords:
+            return []
+        
+        similar_issues = []
+        
+        for _, ticket in tickets.iterrows():
+            # Skip tickets without necessary data
+            if pd.isna(ticket.get('issue_description')):
+                continue
+            
+            issue_desc = str(ticket['issue_description']).lower()
+            ticket_category = str(ticket.get('category', '')).lower()
+            
+            # Calculate similarity score
+            similarity_score = 0.0
+            matched_keywords = []
+            
+            # Keyword matching
+            for keyword in keywords:
+                if keyword in issue_desc or keyword in ticket_category:
+                    similarity_score += 0.2
+                    matched_keywords.append(keyword)
+            
+            # Segment boost (same segment issues are more relevant)
+            ticket_segment = ticket.get('segment', '')
+            if ticket_segment == customer_segment:
+                similarity_score += 0.3
+                matched_keywords.append(f"same_segment({customer_segment})")
+            
+            # Event type matching
+            if event_type.lower() in ticket_category:
+                similarity_score += 0.2
+                matched_keywords.append(f"category_match({event_type})")
+            
+            # Only include if reasonably similar
+            if similarity_score >= 0.4:
+                # Analyze resolution quality
+                csat = ticket.get('csat_score', 0)
+                status = ticket.get('status', 'unknown')
+                resolution_time = ticket.get('resolution_time_hours', 0)
+                
+                # Classify resolution effectiveness
+                if csat >= 4.5:
+                    effectiveness = "excellent"
+                elif csat >= 4.0:
+                    effectiveness = "good"
+                elif csat >= 3.0:
+                    effectiveness = "mediocre"
+                else:
+                    effectiveness = "poor"
+                
+                similar_issues.append({
+                    'ticket_id': ticket.get('ticket_id', 'unknown'),
+                    'customer_id': ticket.get('customer_id', 'unknown'),
+                    'segment': ticket_segment,
+                    'issue_description': ticket['issue_description'],
+                    'category': ticket.get('category', 'unknown'),
+                    'resolution': ticket.get('resolution', 'unknown'),
+                    'csat_score': float(csat) if not pd.isna(csat) else 0.0,
+                    'status': status,
+                    'resolution_time_hours': float(resolution_time) if not pd.isna(resolution_time) else 0.0,
+                    'similarity_score': similarity_score,
+                    'matched_keywords': matched_keywords,
+                    'effectiveness': effectiveness
+                })
+        
+        # Sort by similarity score (highest first)
+        similar_issues.sort(key=lambda x: x['similarity_score'], reverse=True)
+        
+        return similar_issues[:limit]
+    
+    def _extract_issue_keywords(self, description: str, event_type: str) -> List[str]:
+        """
+        Extract meaningful keywords from issue description.
+        
+        Smart extraction based on common CX issues.
+        """
+        description = description.lower()
+        keywords = []
+        
+        # Common issue patterns
+        issue_patterns = {
+            'delivery': ['delay', 'shipping', 'delivery', 'late', 'arrived', 'package', 'tracking'],
+            'product': ['wrong', 'defective', 'broken', 'damaged', 'quality', 'missing', 'incorrect'],
+            'refund': ['refund', 'return', 'money back', 'charge', 'billing'],
+            'account': ['login', 'password', 'access', 'account', 'forgot'],
+            'cancellation': ['cancel', 'subscription', 'terminate', 'stop'],
+            'inquiry': ['question', 'how to', 'information', 'help', 'wondering']
+        }
+        
+        # Extract event type keywords
+        if event_type:
+            keywords.append(event_type.lower())
+        
+        # Extract pattern-based keywords
+        for category, pattern_words in issue_patterns.items():
+            for word in pattern_words:
+                if word in description:
+                    keywords.append(word)
+                    # Also add the category
+                    if category not in keywords:
+                        keywords.append(category)
+        
+        # Extract individual important words (nouns, verbs)
+        words = description.split()
+        important_words = [w for w in words if len(w) > 4]  # Words longer than 4 chars
+        keywords.extend(important_words[:5])  # Max 5 additional words
+        
+        return list(set(keywords))  # Remove duplicates
+    
+    def get_resolution_effectiveness_analysis(
+        self,
+        similar_issues: List[Dict[str, Any]],
+        customer_segment: str
+    ) -> Dict[str, Any]:
+        """
+        🎯 ANALYZE WHAT SOLUTIONS ACTUALLY WORK
+        
+        Learn from historical data which resolutions lead to:
+        - High CSAT (satisfied customers)
+        - Low CSAT (dissatisfied customers)
+        
+        Segment-specific recommendations.
+        
+        Args:
+            similar_issues: List of similar historical issues
+            customer_segment: Current customer's segment
+            
+        Returns:
+            Analysis of resolution effectiveness
+        """
+        if not similar_issues:
+            return {
+                'total_similar_issues': 0,
+                'recommendation': 'No historical data - use best practices'
+            }
+        
+        # Separate by effectiveness
+        excellent_resolutions = [i for i in similar_issues if i['effectiveness'] == 'excellent']
+        good_resolutions = [i for i in similar_issues if i['effectiveness'] == 'good']
+        poor_resolutions = [i for i in similar_issues if i['effectiveness'] == 'poor']
+        
+        # Focus on segment-specific patterns
+        segment_issues = [i for i in similar_issues if i['segment'] == customer_segment]
+        
+        # Find best practices (what worked)
+        best_practices = []
+        if excellent_resolutions:
+            # Group by resolution type
+            resolution_groups = {}
+            for issue in excellent_resolutions:
+                res_key = str(issue['resolution'])[:50]  # First 50 chars as key
+                if res_key not in resolution_groups:
+                    resolution_groups[res_key] = []
+                resolution_groups[res_key].append(issue)
+            
+            # Find most common successful resolutions
+            for res, issues in sorted(resolution_groups.items(), key=lambda x: len(x[1]), reverse=True):
+                avg_csat = sum(i['csat_score'] for i in issues) / len(issues)
+                avg_time = sum(i['resolution_time_hours'] for i in issues) / len(issues)
+                
+                best_practices.append({
+                    'resolution_type': res,
+                    'success_count': len(issues),
+                    'avg_csat': avg_csat,
+                    'avg_resolution_time': avg_time,
+                    'segments': list(set(i['segment'] for i in issues))
+                })
+        
+        # Find what to avoid (what failed)
+        avoid_patterns = []
+        if poor_resolutions:
+            for issue in poor_resolutions[:3]:  # Top 3 failures
+                avoid_patterns.append({
+                    'resolution': str(issue['resolution'])[:50],
+                    'csat': issue['csat_score'],
+                    'segment': issue['segment']
+                })
+        
+        # Generate recommendation
+        recommendation = self._generate_smart_recommendation(
+            best_practices,
+            avoid_patterns,
+            customer_segment,
+            segment_issues
+        )
+        
+        return {
+            'total_similar_issues': len(similar_issues),
+            'segment_specific_issues': len(segment_issues),
+            'excellent_resolutions': len(excellent_resolutions),
+            'good_resolutions': len(good_resolutions),
+            'poor_resolutions': len(poor_resolutions),
+            'best_practices': best_practices[:3],  # Top 3
+            'avoid_patterns': avoid_patterns,
+            'recommendation': recommendation,
+            'avg_csat_historical': sum(i['csat_score'] for i in similar_issues) / len(similar_issues),
+            'avg_resolution_time': sum(i['resolution_time_hours'] for i in similar_issues) / len(similar_issues)
+        }
+    
+    def _generate_smart_recommendation(
+        self,
+        best_practices: List[Dict],
+        avoid_patterns: List[Dict],
+        customer_segment: str,
+        segment_issues: List[Dict]
+    ) -> str:
+        """Generate actionable recommendation based on historical data."""
+        recommendations = []
+        
+        if best_practices:
+            top_practice = best_practices[0]
+            recommendations.append(
+                f"✅ PROVEN SOLUTION: '{top_practice['resolution_type']}' "
+                f"worked in {top_practice['success_count']} cases "
+                f"({top_practice['avg_csat']:.1f}/5 CSAT)"
+            )
+            
+            if customer_segment in top_practice['segments']:
+                recommendations.append(
+                    f"   → This solution specifically worked for {customer_segment} customers!"
+                )
+        
+        if avoid_patterns:
+            recommendations.append(
+                f"❌ AVOID: {len(avoid_patterns)} resolution(s) led to low satisfaction"
+            )
+            worst = avoid_patterns[0]
+            recommendations.append(
+                f"   → '{worst['resolution']}' resulted in {worst['csat']:.1f}/5 CSAT"
+            )
+        
+        if segment_issues:
+            recommendations.append(
+                f"📊 {len(segment_issues)} similar cases found for {customer_segment} segment"
+            )
+        
+        if not recommendations:
+            recommendations.append("No specific historical patterns - use general best practices")
+        
+        return " | ".join(recommendations)
     
     def find_similar_customers(
         self,
@@ -540,4 +848,67 @@ class DataAnalytics:
             'nps_category': 'promoter' if nps_score and nps_score >= 9 else ('passive' if nps_score and nps_score >= 7 else 'detractor'),
             'feedback_text': str(latest['feedback_text']) if pd.notna(latest.get('feedback_text')) else None,
             'survey_count': len(customer_nps)
+        }
+
+    def get_customer_payment_reliability(self, customer: Customer) -> Dict[str, Any]:
+        """
+        Get payment failure rate and reliability from payments sheet.
+        
+        Payment failures are a STRONG churn indicator - customers with
+        payment issues are likely having financial problems or dissatisfaction.
+        
+        Args:
+            customer: Customer object
+            
+        Returns:
+            Dictionary with payment stats and risk score
+        """
+        payments_df = self._load_payments()
+        
+        if payments_df is None or self.orders_df is None:
+            return {
+                'total_payments': 0,
+                'payment_risk': 0.0
+            }
+        
+        # STEP 1: Get customer's orders
+        customer_orders = self.orders_df[
+            self.orders_df['customer_id'] == customer.customer_id
+        ]
+        
+        if len(customer_orders) == 0:
+            return {
+                'total_payments': 0,
+                'failed_payments': 0,
+                'payment_risk': 0.0
+            }
+        
+        # STEP 2: Get payments for those orders (JOIN operation)
+        order_ids = customer_orders['order_id'].tolist()
+        customer_payments = payments_df[
+            payments_df['order_id'].isin(order_ids)
+        ]
+        
+        if len(customer_payments) == 0:
+            return {
+                'total_payments': 0,
+                'failed_payments': 0,
+                'payment_risk': 0.0
+            }
+        
+        # STEP 3: Calculate failure rate
+        failed = len(customer_payments[customer_payments['status'] == 'failed'])
+        total = len(customer_payments)
+        failure_rate = failed / total if total > 0 else 0.0
+        
+        # Payment risk: scale failure rate (>20% failure = very high risk)
+        payment_risk = min(1.0, failure_rate * 3)  # 33% failure = 1.0 risk
+        
+        return {
+            'total_payments': total,
+            'failed_payments': failed,
+            'successful_payments': total - failed,
+            'failure_rate': failure_rate,
+            'payment_risk': payment_risk,
+            'preferred_method': customer_payments['payment_method'].mode()[0] if len(customer_payments) > 0 else None
         }

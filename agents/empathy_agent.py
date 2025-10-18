@@ -215,6 +215,8 @@ class EmpathyAgent:
             )
             
         except Exception as e:
+            print(f"[DEBUG] Empathy Agent Error: {str(e)}")
+            print(f"[DEBUG] Response content: {response.content if 'response' in locals() else 'No response'}")
             state.add_message(
                 "empathy_agent",
                 f"Error generating response: {str(e)}"

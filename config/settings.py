@@ -24,15 +24,15 @@ LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "false")
 LANGCHAIN_PROJECT = os.getenv("LANGCHAIN_PROJECT", "AgentMAX-CX")
 
 # LLM Configuration
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")  # Changed to gpt-4o-mini (more accessible and faster)
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o")  # Using GPT-4o for better quality responses
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2000"))
 
 # Agent Configuration
-CONTEXT_AGENT_MODEL = os.getenv("CONTEXT_AGENT_MODEL", "gpt-4o-mini")
-PATTERN_AGENT_MODEL = os.getenv("PATTERN_AGENT_MODEL", "gpt-4o-mini")
-DECISION_AGENT_MODEL = os.getenv("DECISION_AGENT_MODEL", "gpt-4o-mini")
-EMPATHY_AGENT_MODEL = os.getenv("EMPATHY_AGENT_MODEL", "gpt-4o-mini")
+CONTEXT_AGENT_MODEL = os.getenv("CONTEXT_AGENT_MODEL", "gpt-4o")
+PATTERN_AGENT_MODEL = os.getenv("PATTERN_AGENT_MODEL", "gpt-4o")
+DECISION_AGENT_MODEL = os.getenv("DECISION_AGENT_MODEL", "gpt-4o")
+EMPATHY_AGENT_MODEL = os.getenv("EMPATHY_AGENT_MODEL", "gpt-4o")
 
 # Memory Configuration
 MEMORY_MAX_HISTORY = int(os.getenv("MEMORY_MAX_HISTORY", "50"))

@@ -129,13 +129,17 @@ def create_cx_workflow_with_routing():
         return {"state": updated_state}
     
     def escalation_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle escalation to human agent."""
+        """Handle escalation to human agent - but still generate empathy response first."""
         agent_state: AgentState = state["state"]
-        agent_state.add_message(
+        
+        # Generate empathy response even for escalated cases
+        updated_state = empathy_agent(agent_state)
+        
+        updated_state.add_message(
             "escalation_handler",
             "Case escalated to human agent for immediate attention"
         )
-        return {"state": agent_state}
+        return {"state": updated_state}
     
     # Routing functions
     def should_analyze_patterns(state: Dict[str, Any]) -> str:

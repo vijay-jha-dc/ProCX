@@ -159,6 +159,7 @@ class DecisionAgent:
         """
         Determine if escalation is needed based on rules.
         Enhanced with support history and churn reason analysis.
+        SMARTER LOGIC: Proactive events shouldn't auto-escalate just for churn risk.
         
         Args:
             state: Current agent state
@@ -169,6 +170,31 @@ class DecisionAgent:
         # Get support history
         support_history = self.analytics.get_customer_support_history(state.customer)
         
+        # Check if this is a proactive event
+        is_proactive = state.event and state.event.event_type.value.startswith("proactive_")
+        
+        # For PROACTIVE events, use more selective escalation criteria
+        if is_proactive:
+            # Only escalate proactive if:
+            # 1. VIP customer with VERY HIGH churn risk (>80%)
+            if state.customer.is_vip and state.predicted_churn_risk and state.predicted_churn_risk >= 0.8:
+                return True
+            
+            # 2. Customer has low CSAT history (indicates past dissatisfaction)
+            if support_history:
+                avg_csat = support_history.get('avg_csat')
+                if avg_csat and avg_csat < 2.5:  # Very dissatisfied
+                    return True
+            
+            # 3. High-value customer (>$5000 LTV) with critical churn risk (>85%)
+            if state.customer.lifetime_value > 5000 and state.predicted_churn_risk and state.predicted_churn_risk >= 0.85:
+                return True
+            
+            # Otherwise, handle proactively without escalation
+            return False
+        
+        # For REACTIVE events (traditional escalation logic):
+        
         # VIP customer with negative sentiment
         if state.customer.is_vip and state.sentiment and \
            state.sentiment.value in ["negative", "very_negative"]:
@@ -178,7 +204,7 @@ class DecisionAgent:
         if state.urgency_level and state.urgency_level >= settings.ESCALATION_URGENCY_THRESHOLD:
             return True
         
-        # High churn risk
+        # High churn risk (only for reactive events)
         if state.predicted_churn_risk and \
            state.predicted_churn_risk >= settings.CHURN_RISK_THRESHOLD:
             return True

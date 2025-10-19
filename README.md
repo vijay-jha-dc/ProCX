@@ -15,6 +15,7 @@ Built for the **AgentMAX Hackathon 2025** using LangGraph, LangChain, and GPT-4.
 Traditional customer service is **reactive** - companies wait for customers to complain, then scramble to fix issues. By then, damage is already done and customers are often lost.
 
 **ProCX flips the script:**
+
 - 🔮 **Predicts** churn risk before customers complain
 - 🛡️ **Prevents** churn with early, personalized interventions
 - 📊 **Protects** revenue by saving at-risk customers proactively
@@ -24,18 +25,21 @@ Traditional customer service is **reactive** - companies wait for customers to c
 ## 🌟 Key Features
 
 ### 1. 🔮 Proactive Monitoring
+
 - **Real-time health scoring** of all 1,000 customers using 10 factors
 - **Automated scanning** to identify at-risk customers
 - **Pre-emptive intervention** generation before complaints occur
 - **Dashboard visualization** of customer health distribution
 
 ### 2. 🌐 Multi-Language Intelligence
+
 - **5 languages supported:** English, Hindi, Tamil, Telugu, Bengali
 - **Auto-detection** from customer database
 - **GPT-4 powered** culturally appropriate responses
 - **Localized** for Indian market
 
 ### 3. 🧠 Intelligent Pattern Matching
+
 - **Dual-layer approach:**
   - **Layer 1:** Similar customer profiles (demographics, behavior, value)
   - **Layer 2:** Similar historical issues (problem types, resolutions)
@@ -43,11 +47,13 @@ Traditional customer service is **reactive** - companies wait for customers to c
 - **Resolution effectiveness:** Analyzes CSAT scores to identify best practices
 
 ### 4. 💳 Payment Intelligence
+
 - **Payment failure tracking** across all transactions
 - **Churn signals** from payment reliability (75% failure rate = high risk)
 - **Cross-referenced** with orders for complete financial view
 
 ### 5. 📊 Comprehensive Data Integration
+
 - **10 data sources:** customers, orders, support_tickets, churn_labels, nps_survey, payments, shipments, refunds, products, customer_events
 - **Real-time analytics** on customer cohorts
 - **NPS-aware** tone adjustment
@@ -67,17 +73,20 @@ pip install -r requirements.txt
 ### Setup
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/vijay-jha-dc/ProCX.git
 cd ProCX
 ```
 
 2. **Install dependencies**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. **Configure environment**
+
 ```bash
 # Create .env file
 cp .env.example .env
@@ -89,16 +98,19 @@ OPENAI_API_KEY=your-api-key-here
 4. **Run the platform**
 
 **For Judges/Demo (Recommended):**
+
 ```bash
 python main.py --mode proactive
 ```
 
 **For Testing Scenarios:**
+
 ```bash
 python main.py --mode demo
 ```
 
 **For Interactive Exploration:**
+
 ```bash
 python main.py --mode interactive
 ```
@@ -114,6 +126,7 @@ python main.py --mode proactive
 ```
 
 **What it shows:**
+
 - Scans all 1,000 customers in real-time
 - Identifies at-risk customers using 10-factor health score
 - Generates automated retention interventions
@@ -121,6 +134,7 @@ python main.py --mode proactive
 - Shows **prevention vs reaction** approach
 
 **Why it wins:**
+
 - This is what makes ProCX unique
 - Demonstrates AI-powered prediction
 - Shows business value (save customers before they leave)
@@ -132,6 +146,7 @@ python main.py --mode demo
 ```
 
 **What it shows:**
+
 - 5 pre-built customer scenarios
 - Multi-agent workflow in action
 - Data-driven decision making
@@ -145,6 +160,7 @@ python main.py --mode interactive
 ```
 
 **What it shows:**
+
 - Menu-driven interface
 - Custom event generation
 - Real-time customer analytics
@@ -187,12 +203,12 @@ Customer Response + Action Plan + Memory Storage
 
 ### Agent Responsibilities
 
-| Agent | Purpose | Key Outputs |
-|-------|---------|-------------|
-| **Context Agent** | Analyzes customer events, sentiment, urgency | Sentiment, Urgency (1-5), Risk Score, Summary |
-| **Pattern Agent** | Predicts churn using historical patterns | Churn Risk (%), Similar Patterns, Insights |
-| **Decision Agent** | Determines best action and escalation | Action Plan, Priority, Escalation Flag |
-| **Empathy Agent** | Generates personalized responses | Multi-Language Message, Tone, Empathy Score |
+| Agent              | Purpose                                      | Key Outputs                                   |
+| ------------------ | -------------------------------------------- | --------------------------------------------- |
+| **Context Agent**  | Analyzes customer events, sentiment, urgency | Sentiment, Urgency (1-5), Risk Score, Summary |
+| **Pattern Agent**  | Predicts churn using historical patterns     | Churn Risk (%), Similar Patterns, Insights    |
+| **Decision Agent** | Determines best action and escalation        | Action Plan, Priority, Escalation Flag        |
+| **Empathy Agent**  | Generates personalized responses             | Multi-Language Message, Tone, Empathy Score   |
 
 ---
 
@@ -259,6 +275,7 @@ ProCX calculates customer health using:
 ### Churn Prediction Model
 
 **Hybrid Approach:**
+
 - **60% Data-Driven:** Using 10 factors above
 - **40% AI Inference:** GPT-4 analyzing patterns and context
 
@@ -270,48 +287,54 @@ This combination provides both **explainable** (data-based) and **intelligent** 
 
 **Source:** `data/AgentMAX_CX_dataset.xlsx` (10 sheets)
 
-| Sheet | Records | Purpose |
-|-------|---------|---------|
-| **customers** | 1,000 | Base profiles, segments, LTV, loyalty tiers |
-| **orders** | 5,000 | Purchase history, frequency, recency |
-| **support_tickets** | 2,000 | Issue descriptions, resolutions, CSAT |
-| **churn_labels** | 1,000 | Ground truth churn data with ML predictions |
-| **nps_survey** | 800 | Net Promoter Scores |
-| **payments** | 4,750 | Transaction history, payment failures |
-| **shipments** | 1,346 | Delivery tracking |
-| **refunds** | 400 | Return requests |
-| **products** | 300 | Product catalog |
-| **customer_events** | 10,000 | Behavioral signals |
+| Sheet               | Records | Purpose                                     |
+| ------------------- | ------- | ------------------------------------------- |
+| **customers**       | 1,000   | Base profiles, segments, LTV, loyalty tiers |
+| **orders**          | 5,000   | Purchase history, frequency, recency        |
+| **support_tickets** | 2,000   | Issue descriptions, resolutions, CSAT       |
+| **churn_labels**    | 1,000   | Ground truth churn data with ML predictions |
+| **nps_survey**      | 800     | Net Promoter Scores                         |
+| **payments**        | 4,750   | Transaction history, payment failures       |
+| **shipments**       | 1,346   | Delivery tracking                           |
+| **refunds**         | 400     | Return requests                             |
+| **products**        | 300     | Product catalog                             |
+| **customer_events** | 10,000  | Behavioral signals                          |
 
 ---
 
 ## 🏆 Competitive Advantages
 
 ### 1. **Proactive vs Reactive**
+
 - Traditional: Wait for complaint → React
 - ProCX: Predict churn → Prevent → Protect revenue
 
 ### 2. **Multi-Language Intelligence**
+
 - Authentic localization in 5 Indian languages
 - GPT-4 powered cultural awareness
 - Auto-detection from customer preferences
 
 ### 3. **Comprehensive Data Integration**
+
 - Uses ALL 10 data sources (not just customer profiles)
 - Payment intelligence for early churn signals
 - NPS-aware tone adjustment
 
 ### 4. **Intelligent Learning**
+
 - Dual-layer pattern matching
 - Learns from what actually worked (CSAT analysis)
 - Recommends proven solutions
 
 ### 5. **Real-Time Health Monitoring**
+
 - Dashboard visualization
 - 10-factor scoring algorithm
 - Priority-based intervention queue
 
 ### 6. **Production-Ready**
+
 - Memory persistence (JSONL)
 - Error handling and fallbacks
 - Scalable LangGraph architecture
@@ -340,16 +363,19 @@ LANGCHAIN_PROJECT=ProCX
 ### Model Selection
 
 **Default:** `gpt-4o` (Recommended)
+
 - Latest GPT-4 model
 - Fastest response times
 - Best quality
 
 **Alternative:** `gpt-4o-mini`
+
 - Faster
 - Cheaper
 - Good for testing
 
 Edit in `config/settings.py`:
+
 ```python
 LLM_MODEL = "gpt-4o-mini"  # or "gpt-4o"
 ```
@@ -382,11 +408,12 @@ LLM_MODEL = "gpt-4o-mini"  # or "gpt-4o"
 **Customer:** Sakshi Patel (Language: Bengali)
 
 **Response:**
-> প্রিয় সক্ষী প্যাটেল, আপনার অসন্তোষের জন্য আমি আন্তরিকভাবে দুঃখিত। 
+
+> প্রিয় সক্ষী প্যাটেল, আপনার অসন্তোষের জন্য আমি আন্তরিকভাবে দুঃখিত।
 > আপনার গুরুত্বপূর্ণ ব্রোঞ্জ এবং VIP অবস্থানকে আমরা গভীরভাবে মূল্যায়ন করি...
 
-*(Translation: Dear Sakshi Patel, I sincerely apologize for your dissatisfaction. 
-We deeply value your important Bronze and VIP status...)*
+_(Translation: Dear Sakshi Patel, I sincerely apologize for your dissatisfaction.
+We deeply value your important Bronze and VIP status...)_
 
 ---
 
@@ -405,21 +432,25 @@ We deeply value your important Bronze and VIP status...)*
 ### Common Issues
 
 **1. "No module named 'langchain_openai'"**
+
 ```bash
 pip install langchain-openai
 ```
 
 **2. "OpenAI API key not found"**
+
 - Check `.env` file exists
 - Verify `OPENAI_API_KEY=sk-...` is set
 - Restart application after adding key
 
 **3. "Cannot read Excel file"**
+
 ```bash
 pip install openpyxl
 ```
 
 **4. Pandas SettingWithCopyWarning**
+
 - These are warnings, not errors
 - Code functions correctly
 - Can be suppressed if desired
@@ -429,6 +460,7 @@ pip install openpyxl
 ## 🛣️ Roadmap
 
 ### Completed ✅
+
 - [x] Multi-agent LangGraph workflow
 - [x] 10-factor health scoring
 - [x] Multi-language support (5 languages)
@@ -438,6 +470,7 @@ pip install openpyxl
 - [x] Memory persistence
 
 ### Future Enhancements 🚀
+
 - [ ] Real-time event streaming
 - [ ] A/B testing framework
 - [ ] Custom ML churn models
@@ -451,6 +484,7 @@ pip install openpyxl
 ## 🤝 Contributing
 
 This is a hackathon project. For questions or collaboration:
+
 - **Author:** Vijay Jha
 - **GitHub:** [@vijay-jha-dc](https://github.com/vijay-jha-dc)
 - **Event:** AgentMAX Hackathon 2025

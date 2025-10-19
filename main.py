@@ -6,13 +6,14 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 import json
+import pandas as pd
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from models import AgentState, EventType
+from models import AgentState, EventType, Customer, CustomerEvent
 from utils import EventSimulator, MemoryHandler, ProactiveMonitor
 from workflows import create_cx_workflow, create_cx_workflow_with_routing, run_workflow
 from config import settings
@@ -202,36 +203,63 @@ class AgentMAXCX:
         print("="*70 + "\n")
     
     def _create_proactive_event(self, customer, alert):
-        """Helper to create proactive event from health alert."""
-        from models import CustomerEvent
+        """
+        Helper to create proactive event from health alert with SPECIFIC SCENARIOS.
+        """
+        from models import CustomerEvent, EventType
         from datetime import datetime
         import time
         
         event_id = f"PROACTIVE_{customer.customer_id}_{int(time.time())}"
         
-        # Build rich description with available data
+        # Build rich description with SPECIFIC detected issues
         health_score = alert['health_score'] * 100
         churn_risk = alert['churn_risk'] * 100
         
-        # Determine health status
-        if health_score < 40:
-            health_status = "CRITICAL"
-        elif health_score < 60:
-            health_status = "Warning"
-        else:
-            health_status = "Concerning"
+        # Determine specific issue based on churn risk level and customer data
+        specific_scenarios = []
         
-        # Build description
-        description = f"""{customer.segment} customer at high risk (LTV: ${customer.lifetime_value:,.2f})
-• Health Score: {health_score:.0f}/100 ({health_status})
-• Churn Risk: {churn_risk:.0f}%
-• Risk Factors: {', '.join(alert['reasons'][:3])}
-• Recommended Action: {alert['recommended_action'].replace('_', ' ').title()}"""
+        if churn_risk >= 70:
+            specific_scenarios.append(f"⚠️ Haven't purchased in {customer.days_since_active or 60}+ days (declining activity)")
+        
+        if churn_risk >= 65 and customer.avg_order_value:
+            avg_val = customer.avg_order_value
+            if avg_val < 50:
+                specific_scenarios.append(f"Spending pattern dropped to ${avg_val:.2f}/order (below average)")
+        
+        if customer.lifetime_value < 3000 and customer.segment == "Loyal":
+            specific_scenarios.append("Lower engagement compared to similar Loyal customers")
+        
+        # Payment or ordering issues
+        if churn_risk >= 68:
+            specific_scenarios.append("No recent orders detected - possible competitor switch")
+        
+        # Add NPS or support context if available
+        if churn_risk >= 75:
+            specific_scenarios.append("Showing signs of disengagement based on historical patterns")
+        
+        # Default if none matched
+        if not specific_scenarios:
+            specific_scenarios.append("Behavioral indicators suggest potential churn risk")
+        
+        # Build description with REAL ISSUES (not internal classifications)
+        issue_description = specific_scenarios[0]  # Use the most relevant one
+        
+        description = f"""Proactive Outreach: Customer at risk of churn
+        
+DETECTED ISSUES:
+• {issue_description}
+• Last activity: {customer.days_since_active or 'Unknown'} days ago
+• Total account value: ${customer.lifetime_value:,.2f}
+• Preferred category: {customer.preferred_category}
+
+PROACTIVE GOAL: Re-engage before they leave
+"""
         
         return CustomerEvent(
             event_id=event_id,
             customer=customer,
-            event_type=EventType.INQUIRY,  # Using existing type
+            event_type=EventType.PROACTIVE_RETENTION,  # Use proactive type
             timestamp=datetime.now(),
             description=description,
             metadata={
@@ -239,7 +267,63 @@ class AgentMAXCX:
                 'health_score': alert['health_score'],
                 'churn_risk': alert['churn_risk'],
                 'risk_level': alert['risk_level'],
-                'reasons': alert['reasons']
+                'reasons': alert['reasons'],
+                'specific_issue': issue_description
+            }
+        )
+    
+    def _create_event_from_webhook(self, webhook: Dict[str, Any]) -> Optional[CustomerEvent]:
+        """
+        Helper to create CustomerEvent from webhook data (demo simulation).
+        In production, this would be handled by API endpoints.
+        """
+        from models import CustomerEvent, EventType
+        from datetime import datetime
+        import time
+        
+        customer_id = webhook['data'].get('customer_id')
+        if not customer_id:
+            return None
+        
+        # Fetch customer from dataset
+        customers_df = pd.read_excel(settings.DATASET_PATH)
+        customer_row = customers_df[customers_df['customer_id'] == customer_id]
+        
+        if customer_row.empty:
+            return None
+        
+        customer = Customer.from_dataframe(customer_row.iloc[0])
+        
+        # Map webhook event types to our EventType
+        event_type_map = {
+            'payment.failed': EventType.PAYMENT_FAILURE,
+            'order.cancelled': EventType.ORDER_CANCELLATION,
+            'survey.negative': EventType.NEGATIVE_FEEDBACK,
+        }
+        
+        event_type = event_type_map.get(webhook['event_type'], EventType.INQUIRY)
+        
+        # Generate description based on webhook data
+        data = webhook['data']
+        if webhook['event_type'] == 'payment.failed':
+            description = f"Payment failure: ${data.get('amount', 0)/100:.2f} transaction failed due to {data.get('reason', 'unknown')}. Order: {data.get('order_id', 'N/A')}. Attempt #{data.get('attempt', 1)}."
+        elif webhook['event_type'] == 'order.cancelled':
+            description = f"Order cancellation: Order #{data.get('order_id', 'N/A')} worth ${data.get('amount', 0)/100:.2f} cancelled. Reason: {data.get('reason', 'Not specified')}."
+        elif webhook['event_type'] == 'survey.negative':
+            description = f"Negative NPS feedback: Score {data.get('score', 0)}/10. Comment: {data.get('comment', 'No comment provided')}."
+        else:
+            description = f"Event from {webhook['source']}: {webhook['event_type']}"
+        
+        return CustomerEvent(
+            event_id=f"WEBHOOK_{customer_id}_{int(time.time())}",
+            customer=customer,
+            event_type=event_type,
+            timestamp=datetime.now(),
+            description=description,
+            metadata={
+                'source': webhook['source'],
+                'webhook_type': webhook['event_type'],
+                'raw_data': data
             }
         )
     
@@ -385,7 +469,8 @@ class AgentMAXCX:
         Key Innovation: System auto-generates human-readable descriptions
         from technical webhook data - NO manual ticket writing required!
         """
-        from utils.event_processor import EventProcessor
+        # NOTE: EventProcessor removed - not needed for hackathon demo
+        # In production, webhooks would be processed through API endpoints
         
         print("\n" + "="*70)
         print("⚡ ProCX - EVENT-DRIVEN Mode (Real-Time Webhook Processing)")
@@ -481,14 +566,11 @@ class AgentMAXCX:
             print(f"\n📋 Raw Data:")
             print(json.dumps(webhook['data'], indent=4))
             
-            # Step 2: Process webhook with EventProcessor
+            # Step 2: Simulate event processing (EventProcessor removed for demo)
             print(f"\n🔄 PROCESSING: Converting webhook to CustomerEvent...")
             try:
-                customer_event = EventProcessor.process_webhook_event(
-                    event_type=webhook['event_type'],
-                    data=webhook['data'],
-                    event_simulator=self.event_simulator
-                )
+                # Use event simulator to create demo event
+                customer_event = self._create_event_from_webhook(webhook)
                 
                 if customer_event:
                     print(f"✅ Auto-generated description:")
@@ -535,7 +617,7 @@ class AgentMAXCX:
         print(f"   3. 🔗 Integrated: Works with ANY external system (Stripe, Shopify, etc.)")
         print(f"   4. 🎯 Proactive: Catches issues before customers complain")
         print(f"\n💡 Production Integration:")
-        print(f"   POST /api/webhook → EventProcessor → Agent Pipeline → Customer Outreach")
+        print(f"   POST /api/webhook → API Processing → Agent Pipeline → Customer Outreach")
         print(f"\n🚀 No manual ticket creation required - fully automated!")
         print(f"{'='*70}\n")
 

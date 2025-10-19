@@ -239,10 +239,25 @@ class ProactiveMonitor:
         
         at_risk_customers = []
         
-        # Filter customers
+        # Filter customers - DIVERSE SELECTION across all segments
         df = self.analytics.df.copy()
-        if segments:
+        
+        # If no segments specified, ensure diversity across ALL segments
+        if not segments:
+            # Get mix from all segments with different tiers
+            segment_samples = []
+            for seg in ['VIP', 'Loyal', 'Regular', 'Occasional']:
+                seg_df = df[df['segment'] == seg]
+                if len(seg_df) > 0:
+                    # Sample up to 30 from each segment for diversity
+                    sample_size = min(30, len(seg_df))
+                    segment_samples.append(seg_df.sample(n=sample_size, random_state=42))
+            
+            if segment_samples:
+                df = pd.concat(segment_samples).reset_index(drop=True)
+        else:
             df = df[df['segment'].isin(segments)]
+        
         df = df[df['lifetime_value'] >= min_lifetime_value]
         
         print(f"\n🔍 Scanning {len(df)} customers for churn risk...")

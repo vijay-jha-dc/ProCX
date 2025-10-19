@@ -209,12 +209,31 @@ class AgentMAXCX:
         
         event_id = f"PROACTIVE_{customer.customer_id}_{int(time.time())}"
         
+        # Build rich description with available data
+        health_score = alert['health_score'] * 100
+        churn_risk = alert['churn_risk'] * 100
+        
+        # Determine health status
+        if health_score < 40:
+            health_status = "CRITICAL"
+        elif health_score < 60:
+            health_status = "Warning"
+        else:
+            health_status = "Concerning"
+        
+        # Build description
+        description = f"""{customer.segment} customer at high risk (LTV: ${customer.lifetime_value:,.2f})
+• Health Score: {health_score:.0f}/100 ({health_status})
+• Churn Risk: {churn_risk:.0f}%
+• Risk Factors: {', '.join(alert['reasons'][:3])}
+• Recommended Action: {alert['recommended_action'].replace('_', ' ').title()}"""
+        
         return CustomerEvent(
             event_id=event_id,
             customer=customer,
             event_type=EventType.INQUIRY,  # Using existing type
             timestamp=datetime.now(),
-            description=f"Proactive retention: Churn risk {alert['churn_risk']:.1%}",
+            description=description,
             metadata={
                 'is_proactive': True,
                 'health_score': alert['health_score'],
@@ -318,75 +337,6 @@ class AgentMAXCX:
         print(f"\n💡 Key Insight: Proactive beats reactive every time!")
         print(f"{'='*70}\n")
     
-    def run_interactive_mode(self):
-        """Run the platform in interactive mode."""
-        print("\n" + "="*70)
-        print("🎮 ProCX - Interactive Mode")
-        print("="*70)
-        
-        # Show quick stats on start
-        stats = self.event_simulator.get_dataset_stats()
-        print(f"\n📊 Dataset Loaded: {stats['total_customers']} customers")
-        print(f"   Segments: VIP ({stats['segments'].get('VIP', 0)}), "
-              f"Loyal ({stats['segments'].get('Loyal', 0)}), "
-              f"Regular ({stats['segments'].get('Regular', 0)})")
-        print(f"   Total LTV: ${stats['lifetime_value_stats']['mean'] * stats['total_customers']:,.0f}")
-        
-        while True:
-            print("\nOptions:")
-            print("1. Process random event")
-            print("2. Process specific scenario")
-            print("3. Process VIP customer event")
-            print("4. View customer health dashboard")
-            print("5. View session summary")
-            print("6. Exit")
-            
-            choice = input("\nSelect option (1-6): ").strip()
-            
-            if choice == "1":
-                event = self.event_simulator.generate_event()
-                self.process_event(event)
-            
-            elif choice == "2":
-                scenarios = self.event_simulator.get_available_scenarios()
-                print("\nAvailable scenarios:")
-                for i, scenario in enumerate(scenarios, 1):
-                    print(f"{i}. {scenario}")
-                
-                scenario_choice = input("\nSelect scenario (1-5): ").strip()
-                try:
-                    scenario_idx = int(scenario_choice) - 1
-                    if 0 <= scenario_idx < len(scenarios):
-                        event = self.event_simulator.generate_scenario(scenarios[scenario_idx])
-                        self.process_event(event)
-                    else:
-                        print("❌ Invalid selection")
-                except ValueError:
-                    print("❌ Invalid input")
-            
-            elif choice == "3":
-                event = self.event_simulator.generate_event(
-                    customer=self.event_simulator.get_random_customer(segment="VIP")
-                )
-                self.process_event(event)
-            
-            elif choice == "4":
-                self.display_health_dashboard()
-            
-            elif choice == "5":
-                summary = self.memory_handler.get_session_summary()
-                print("\n" + "="*70)
-                print("📋 Session Summary")
-                print("="*70)
-                print(json.dumps(summary, indent=2))
-            
-            elif choice == "6":
-                print("\n👋 Thank you for using AgentMAX CX!")
-                break
-            
-            else:
-                print("❌ Invalid option. Please try again.")
-    
     def run_demo(self, num_events: int = 5):
         """
         Run a demo with multiple events.
@@ -424,6 +374,170 @@ class AgentMAXCX:
         summary = self.memory_handler.get_session_summary()
         print(json.dumps(summary, indent=2))
         print()
+    
+    def run_event_driven_demo(self):
+        """
+        ⚡ EVENT-DRIVEN MODE: Process real-time webhook events
+        
+        Demonstrates how the system handles external webhook events from
+        payment gateways, e-commerce platforms, and survey systems.
+        
+        Key Innovation: System auto-generates human-readable descriptions
+        from technical webhook data - NO manual ticket writing required!
+        """
+        from utils.event_processor import EventProcessor
+        
+        print("\n" + "="*70)
+        print("⚡ ProCX - EVENT-DRIVEN Mode (Real-Time Webhook Processing)")
+        print("="*70)
+        print("\n💡 This mode simulates how ProCX processes real-time webhooks")
+        print("   from external systems (Stripe, Shopify, Qualtrics, etc.)")
+        print("\n🔑 Key Innovation: Auto-generates descriptions from technical events!")
+        print("   No manual ticket writing - system understands webhook data.\n")
+        
+        # Sample webhook events (what we'd receive from external APIs)
+        webhook_events = [
+            {
+                "event_type": "payment.failed",
+                "timestamp": "2025-01-10T14:32:00Z",
+                "source": "stripe",
+                "data": {
+                    "customer_id": "C100109",
+                    "amount": 2499.99,
+                    "currency": "USD",
+                    "order_id": "ORD-2025-789",
+                    "reason": "insufficient_funds",
+                    "payment_method": "card_****1234",
+                    "attempt": 2
+                }
+            },
+            {
+                "event_type": "cart.abandoned",
+                "timestamp": "2025-01-10T12:15:00Z",
+                "source": "shopify",
+                "data": {
+                    "customer_id": "C100141",
+                    "cart_value": 3599.50,
+                    "items_count": 5,
+                    "items": ["Laptop", "Mouse", "Keyboard", "Monitor", "Webcam"],
+                    "time_since_abandonment": 24,  # hours
+                    "checkout_url": "https://shop.example.com/cart/abc123"
+                }
+            },
+            {
+                "event_type": "nps.detractor",
+                "timestamp": "2025-01-10T09:45:00Z",
+                "source": "qualtrics",
+                "data": {
+                    "customer_id": "C100302",
+                    "score": 3,
+                    "feedback": "Disappointed with recent delivery delays and product quality",
+                    "survey_id": "NPS-2025-Q1",
+                    "previous_score": 8,
+                    "score_drop": 5
+                }
+            },
+            {
+                "event_type": "order.delayed",
+                "timestamp": "2025-01-10T16:20:00Z",
+                "source": "logistics_api",
+                "data": {
+                    "customer_id": "C100312",
+                    "order_id": "ORD-2025-456",
+                    "expected_delivery": "2025-01-08",
+                    "actual_status": "in_transit",
+                    "delay_days": 3,
+                    "reason": "weather_delays",
+                    "order_value": 1899.00
+                }
+            },
+            {
+                "event_type": "support.ticket.created",
+                "timestamp": "2025-01-10T11:30:00Z",
+                "source": "zendesk",
+                "data": {
+                    "customer_id": "C100425",
+                    "ticket_id": "TICKET-12345",
+                    "priority": "high",
+                    "subject": "Product defect - immediate replacement needed",
+                    "category": "product_quality",
+                    "previous_tickets": 2
+                }
+            }
+        ]
+        
+        print(f"📨 Processing {len(webhook_events)} webhook events...\n")
+        
+        for i, webhook in enumerate(webhook_events, 1):
+            print(f"\n{'='*70}")
+            print(f"⚡ Webhook Event {i}/{len(webhook_events)}")
+            print(f"{'='*70}")
+            
+            # Step 1: Show raw webhook (what we receive from external API)
+            print(f"\n📥 INCOMING WEBHOOK (from {webhook['source']}):")
+            print(f"   Event Type: {webhook['event_type']}")
+            print(f"   Timestamp: {webhook['timestamp']}")
+            print(f"   Customer ID: {webhook['data']['customer_id']}")
+            print(f"\n📋 Raw Data:")
+            print(json.dumps(webhook['data'], indent=4))
+            
+            # Step 2: Process webhook with EventProcessor
+            print(f"\n🔄 PROCESSING: Converting webhook to CustomerEvent...")
+            try:
+                customer_event = EventProcessor.process_webhook_event(
+                    event_type=webhook['event_type'],
+                    data=webhook['data'],
+                    event_simulator=self.event_simulator
+                )
+                
+                if customer_event:
+                    print(f"✅ Auto-generated description:")
+                    print(f"   \"{customer_event.description}\"")
+                    print(f"\n📊 Event Classification:")
+                    print(f"   Type: {customer_event.event_type.value}")
+                    print(f"   Sentiment: {customer_event.sentiment}")
+                    print(f"   Language: {customer_event.language}")
+                    
+                    # Step 3: Process through agent workflow
+                    print(f"\n🤖 AGENT WORKFLOW: Processing through multi-agent pipeline...")
+                    result = self.process_event(customer_event, verbose=False)
+                    
+                    # Show results
+                    if result:
+                        print(f"\n✨ INTERVENTION GENERATED:")
+                        print(f"   Channel: {result.channel}")
+                        print(f"   Timing: {result.timing}")
+                        print(f"   Priority: {result.priority_level.upper()}")
+                        print(f"\n💬 Response Preview:")
+                        response_preview = result.message_content[:200] + "..." if len(result.message_content) > 200 else result.message_content
+                        print(f"   \"{response_preview}\"")
+                        print(f"\n📈 Empathy Score: {result.empathy_score:.1f}/10")
+                        print(f"   Escalation: {'YES - Human agent' if result.escalation_needed else 'NO - Automated'}")
+                        print(f"   Processing Time: {result.processing_time:.2f}s")
+                    else:
+                        print(f"⚠️  No intervention needed for this event")
+                else:
+                    print(f"⚠️  Could not process webhook event")
+            
+            except Exception as e:
+                print(f"❌ Error processing webhook: {str(e)}")
+            
+            if i < len(webhook_events):
+                input("\n👉 Press Enter to process next webhook...")
+        
+        # Final summary
+        print(f"\n{'='*70}")
+        print(f"✅ EVENT-DRIVEN DEMO COMPLETE")
+        print(f"{'='*70}")
+        print(f"\n🎯 Key Takeaways:")
+        print(f"   1. ⚡ Real-time: Processes webhooks instantly (not batch)")
+        print(f"   2. 🤖 Smart: Auto-generates descriptions from technical data")
+        print(f"   3. 🔗 Integrated: Works with ANY external system (Stripe, Shopify, etc.)")
+        print(f"   4. 🎯 Proactive: Catches issues before customers complain")
+        print(f"\n💡 Production Integration:")
+        print(f"   POST /api/webhook → EventProcessor → Agent Pipeline → Customer Outreach")
+        print(f"\n🚀 No manual ticket creation required - fully automated!")
+        print(f"{'='*70}\n")
 
 
 def main():
@@ -435,9 +549,9 @@ def main():
     )
     parser.add_argument(
         "--mode",
-        choices=["interactive", "demo", "proactive", "test"],
-        default="interactive",
-        help="Run mode (default: interactive)"
+        choices=["demo", "proactive", "event-driven"],
+        default="demo",
+        help="Run mode: demo (showcase agents), proactive (scan database), event-driven (process webhooks)"
     )
     parser.add_argument(
         "--demo-count",
@@ -463,17 +577,12 @@ def main():
     platform = AgentMAXCX(use_routing=not args.no_routing)
     
     # Run based on mode
-    if args.mode == "interactive":
-        platform.run_interactive_mode()
-    elif args.mode == "demo":
+    if args.mode == "demo":
         platform.run_demo(num_events=args.demo_count)
     elif args.mode == "proactive":
         platform.run_proactive_demo(max_interventions=5)
-    elif args.mode == "test":
-        # Quick test
-        print("🧪 Running quick test...")
-        event = platform.event_simulator.generate_event()
-        platform.process_event(event)
+    elif args.mode == "event-driven":
+        platform.run_event_driven_demo()
     
     return 0
 

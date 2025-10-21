@@ -2,11 +2,11 @@
 
 [![LangGraph](https://img.shields.io/badge/LangGraph-Latest-blue)](https://github.com/langchain-ai/langgraph)
 [![LangChain](https://img.shields.io/badge/LangChain-Latest-green)](https://github.com/langchain-ai/langchain)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-brightgreen)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-brightgreen)](https://www.python.org/)
 
-**ProCX** is an intelligent, multi-agent AI platform that transforms customer experience management through **proactive** intervention - predicting and preventing churn BEFORE customers complain or leave.
+**ProCX** is an intelligent, multi-agent AI platform that transforms customer experience management through **100% proactive** intervention - predicting and preventing churn BEFORE customers complain or leave.
 
-Built for the **AgentMAX Hackathon 2025** using LangGraph, LangChain, and GPT-4.
+Built for the **AgentMAX Hackathon 2025** using LangGraph, LangChain, and OpenAI GPT-4.
 
 ---
 
@@ -14,50 +14,56 @@ Built for the **AgentMAX Hackathon 2025** using LangGraph, LangChain, and GPT-4.
 
 Traditional customer service is **reactive** - companies wait for customers to complain, then scramble to fix issues. By then, damage is already done and customers are often lost.
 
-**ProCX flips the script:**
+**ProCX flips the script with 100% proactive intelligence:**
 
 - 🔮 **Predicts** churn risk before customers complain
-- 🛡️ **Prevents** churn with early, personalized interventions
+- 🛡️ **Prevents** churn with early, culturally-aware interventions
 - 📊 **Protects** revenue by saving at-risk customers proactively
+- 🧠 **Learns** from historical patterns and resolution effectiveness
+- 🌍 **Adapts** messaging for cultural context (festivals, language, timing)
 
 ---
 
 ## 🌟 Key Features
 
-### 1. 🔮 Proactive Monitoring
+### 1. 🔮 100% Proactive Monitoring
 
-- **Real-time health scoring** of all 1,000 customers using 10 factors
-- **Automated scanning** to identify at-risk customers
-- **Pre-emptive intervention** generation before complaints occur
+- **Real-time health scoring** using 10-dimensional customer health model
+- **Automated scanning** to identify at-risk customers before complaints
+- **Pre-emptive intervention** generation with escalation continuity
 - **Dashboard visualization** of customer health distribution
+- **No reactive mode** - pure prevention focus
 
-### 2. 🌐 Multi-Language Intelligence
+### 2. 🧠 Multi-Agent Sanskrit Intelligence (Bodha → Dhyana → Niti → Karuna)
+
+- **Bodha (Awareness)** - Context extraction, sentiment inference, cohort positioning
+- **Dhyana (Insight)** - Pattern mining, churn prediction, historical resolution analysis
+- **Niti (Strategy)** - Decision making, escalation rules, compliance enforcement
+- **Karuna (Compassion)** - Empathetic messaging, cultural awareness, festival intelligence
+
+### 3. 🌍 Cultural & Festival Intelligence
 
 - **5 languages supported:** English, Hindi, Tamil, Telugu, Bengali
-- **Auto-detection** from customer database
-- **GPT-4 powered** culturally appropriate responses
-- **Localized** for Indian market
+- **9 festivals tracked:** Diwali, Holi, Raksha Bandhan, Dussehra, Ganesh Chaturthi, Durga Puja, Eid, Christmas, New Year
+- **Multi-language greetings** with cultural significance
+- **Product relevance scoring** for festival-aligned recommendations
+- **Timing-aware messaging** for seasonal context
 
-### 3. 🧠 Intelligent Pattern Matching
+### 4. �️ Escalation Continuity & Memory
 
-- **Dual-layer approach:**
-  - **Layer 1:** Similar customer profiles (demographics, behavior, value)
-  - **Layer 2:** Similar historical issues (problem types, resolutions)
-- **Learning from history:** Recommends solutions that actually worked
-- **Resolution effectiveness:** Analyzes CSAT scores to identify best practices
-
-### 4. 💳 Payment Intelligence
-
-- **Payment failure tracking** across all transactions
-- **Churn signals** from payment reliability (75% failure rate = high risk)
-- **Cross-referenced** with orders for complete financial view
+- **Escalation tracking** prevents duplicate automated interventions
+- **Interaction history** preserves context across scans
+- **Human-in-the-loop** integration with skip logic
+- **JSONL persistence** for transparent audit trails
+- **Selective escalation** (VIP critical churn, severe CSAT, high LTV risk only)
 
 ### 5. 📊 Comprehensive Data Integration
 
 - **10 data sources:** customers, orders, support_tickets, churn_labels, nps_survey, payments, shipments, refunds, products, customer_events
-- **Real-time analytics** on customer cohorts
-- **NPS-aware** tone adjustment
-- **Support history** tracking and analysis
+- **Real-time analytics** on customer cohorts and segment comparisons
+- **NPS-aware** tone adjustment (Detractors, Passives, Promoters)
+- **Payment intelligence** for early churn signals
+- **Resolution effectiveness** learning from CSAT scores
 
 ---
 
@@ -66,7 +72,8 @@ Traditional customer service is **reactive** - companies wait for customers to c
 ### Prerequisites
 
 ```bash
-Python 3.10+
+Python 3.11+
+OpenAI API Key
 pip install -r requirements.txt
 ```
 
@@ -97,118 +104,131 @@ OPENAI_API_KEY=your-api-key-here
 
 4. **Run the platform**
 
-**For Judges/Demo (Recommended):**
+**Proactive Scan (Recommended for Demo):**
 
 ```bash
-python main.py --mode proactive
+python main.py --interventions
 ```
 
-**For Testing Scenarios:**
+**Customer Health Dashboard:**
 
 ```bash
-python main.py --mode demo
+python main.py --dashboard
 ```
 
-**For Interactive Exploration:**
+**Test Curated Scenarios:**
 
 ```bash
-python main.py --mode interactive
+python test_scenarios.py
+```
+
+**Enhanced Feature Tests:**
+
+```bash
+python test_features.py
 ```
 
 ---
 
-## 🎬 Demo Modes Explained
+## 🎬 Demo Commands Explained
 
-### 🔮 Proactive Mode (⭐ Our Differentiator)
+### 🔮 Proactive Interventions (⭐ Our Core Differentiator)
 
 ```bash
-python main.py --mode proactive
+python main.py --interventions
 ```
 
 **What it shows:**
 
-- Scans all 1,000 customers in real-time
+- Scans diverse customer segments for churn risk
 - Identifies at-risk customers using 10-factor health score
 - Generates automated retention interventions
-- Displays customer health dashboard
-- Shows **prevention vs reaction** approach
+- Shows escalation skip logic (prevents duplicate handling)
+- Demonstrates **prevention vs reaction** approach
+- Displays multi-language, festival-aware messaging
 
 **Why it wins:**
 
-- This is what makes ProCX unique
-- Demonstrates AI-powered prediction
-- Shows business value (save customers before they leave)
+- 100% proactive (no reactive mode)
+- Cultural intelligence (festivals + language)
+- Escalation continuity (human-in-the-loop)
+- Multi-agent Sanskrit cognition pipeline
 
-### 🎬 Demo Mode (Scenario Showcase)
+### 📊 Customer Health Dashboard
 
 ```bash
-python main.py --mode demo
+python main.py --dashboard
 ```
 
 **What it shows:**
 
-- 5 pre-built customer scenarios
-- Multi-agent workflow in action
-- Data-driven decision making
-- Multi-language responses
-- End-to-end customer interaction
+- Real-time health distribution across all customers
+- Risk segmentation (Critical, High, Medium, Low)
+- Top 10 at-risk customers with details
+- Segment and tier breakdowns
 
-### 🎮 Interactive Mode (Hands-On)
+### � Curated Test Scenarios
 
 ```bash
-python main.py --mode interactive
+python test_scenarios.py
 ```
 
 **What it shows:**
 
-- Menu-driven interface
-- Custom event generation
-- Real-time customer analytics
-- Session summaries
+- VIP complaint handling
+- New customer onboarding issues
+- High-value payment failures
+- Multi-ticket customer patterns
+- Festival purchase context
+- High-LTV churn risks
 
 ---
 
 ## 🏗️ Architecture
 
-### Multi-Agent System (LangGraph)
+### Multi-Agent System (LangGraph Sequential Pipeline)
 
 ```
-Customer Event
+Proactive Monitor (Health Scoring)
      ↓
-┌─────────────────────────────────────────────────────┐
-│              LANGGRAPH WORKFLOW                      │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  ┌──────────────┐      ┌──────────────┐            │
-│  │   Context    │ ───→ │   Pattern    │            │
-│  │    Agent     │      │    Agent     │            │
-│  └──────────────┘      └──────────────┘            │
-│         ↓                      ↓                     │
-│  Sentiment, Urgency     Churn Prediction            │
-│  Risk Assessment        Historical Patterns         │
-│                                                      │
-│         ↓                      ↓                     │
-│  ┌──────────────┐      ┌──────────────┐            │
-│  │   Decision   │ ───→ │   Empathy    │            │
-│  │    Agent     │      │    Agent     │            │
-│  └──────────────┘      └──────────────┘            │
-│         ↓                      ↓                     │
-│  Action Plan            Personalized Response       │
-│  Escalation Logic       (Multi-Language)            │
-│                                                      │
-└─────────────────────────────────────────────────────┘
+Customer Event (Retention/Check-in)
      ↓
-Customer Response + Action Plan + Memory Storage
+┌─────────────────────────────────────────────────────────────┐
+│              LANGGRAPH SEQUENTIAL WORKFLOW                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌────────────────┐      ┌────────────────┐                │
+│  │  Bodha (बोध)   │ ───→ │ Dhyana (ध्यान) │                │
+│  │  Awareness     │      │   Insight      │                │
+│  └────────────────┘      └────────────────┘                │
+│         ↓                         ↓                          │
+│  Context Summary          Pattern Mining                    │
+│  Sentiment Inference      Churn Prediction                  │
+│  Cohort Positioning       Resolution Effectiveness          │
+│                                                              │
+│         ↓                         ↓                          │
+│  ┌────────────────┐      ┌────────────────┐                │
+│  │  Niti (नीति)   │ ───→ │ Karuna (करुणा) │                │
+│  │  Strategy      │      │  Compassion    │                │
+│  └────────────────┘      └────────────────┘                │
+│         ↓                         ↓                          │
+│  Escalation Decision      Festival-Aware Copy               │
+│  Channel Selection        Multi-Language                    │
+│  Compliance Check         Cultural Context                  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+     ↓
+Escalation Tracking + Memory Persistence + Channel Delivery
 ```
 
-### Agent Responsibilities
+### Agent Responsibilities (Sanskrit Names)
 
-| Agent              | Purpose                                      | Key Outputs                                   |
-| ------------------ | -------------------------------------------- | --------------------------------------------- |
-| **Context Agent**  | Analyzes customer events, sentiment, urgency | Sentiment, Urgency (1-5), Risk Score, Summary |
-| **Pattern Agent**  | Predicts churn using historical patterns     | Churn Risk (%), Similar Patterns, Insights    |
-| **Decision Agent** | Determines best action and escalation        | Action Plan, Priority, Escalation Flag        |
-| **Empathy Agent**  | Generates personalized responses             | Multi-Language Message, Tone, Empathy Score   |
+| Agent (Sanskrit)        | English    | Purpose                                           | Key Outputs                                        |
+| ----------------------- | ---------- | ------------------------------------------------- | -------------------------------------------------- |
+| **Bodha (बोध)**         | Awareness  | Extracts context, sentiment, cohort position      | Context summary, risk signals, segment comparison  |
+| **Dhyana (ध्यान)**      | Insight    | Mines patterns, predicts churn, analyzes history  | Churn risk, similar customers/issues, insights     |
+| **Niti (नीति)**         | Strategy   | Decides action, escalation, channels, compliance  | Action plan, priority, escalation flag, channels   |
+| **Karuna (करुणा)**      | Compassion | Generates empathetic, culturally-aware messages   | Multi-language copy, festival greetings, tone      |
 
 ---
 
@@ -216,38 +236,45 @@ Customer Response + Action Plan + Memory Storage
 
 ```
 ProCX/
-├── main.py                      # Application entry point
-├── requirements.txt             # Python dependencies
-├── .env                        # Environment variables (not in git)
-├── .gitignore                  # Git ignore rules
+├── main.py                           # Entry point (--interventions, --dashboard)
+├── requirements.txt                  # Python dependencies
+├── .env                             # Environment variables (not in git)
+├── README.md                        # This file
+├── DEMO_AND_ARCHITECTURE_GUIDE.md   # Comprehensive architecture doc
 │
-├── agents/                     # Multi-agent implementations
-│   ├── context_agent.py       # Sentiment & urgency analysis
-│   ├── pattern_agent.py       # Churn prediction & patterns
-│   ├── decision_agent.py      # Action planning & escalation
-│   └── empathy_agent.py       # Multi-language response generation
+├── agents/                          # Multi-agent implementations
+│   ├── context_agent.py            # Bodha (बोध) - Awareness
+│   ├── pattern_agent.py            # Dhyana (ध्यान) - Insight
+│   ├── decision_agent.py           # Niti (नीति) - Strategy
+│   └── empathy_agent.py            # Karuna (करुणा) - Compassion
 │
-├── workflows/                  # LangGraph workflows
-│   └── cx_workflow.py         # Main agent orchestration
+├── workflows/                       # LangGraph workflows
+│   └── cx_workflow.py              # Sequential agent orchestration
 │
-├── models/                     # Data models
-│   └── customer.py            # Customer & event models
+├── models/                          # Data models
+│   └── customer.py                 # Customer, Event, State models
 │
-├── config/                     # Configuration
-│   ├── settings.py            # App settings & API keys
-│   └── prompts.py             # Agent system prompts
+├── config/                          # Configuration
+│   ├── settings.py                 # App settings & API keys
+│   └── prompts.py                  # Agent system prompts
 │
-├── utils/                      # Utilities
-│   ├── data_analytics.py      # Multi-sheet data analysis
-│   ├── proactive_monitor.py   # Health scoring & monitoring
-│   ├── memory_handler.py      # Interaction memory
-│   └── event_simulator.py     # Demo event generation
+├── utils/                           # Utilities
+│   ├── data_analytics.py           # Multi-sheet analytics engine
+│   ├── monitor.py                  # Health scoring & risk detection
+│   ├── runner.py                   # Proactive scan orchestration
+│   ├── scheduler.py                # Scheduled job support
+│   ├── escalation_tracker.py       # Escalation continuity
+│   ├── festival_context.py         # Cultural intelligence
+│   └── memory_handler.py           # Interaction memory
 │
-├── data/                       # Data directory
-│   ├── AgentMAX_CX_dataset.xlsx  # 10-sheet customer dataset
-│   └── memory/                # Customer interaction history
+├── data/                            # Data directory
+│   ├── AgentMAX_CX_dataset.xlsx   # 10-sheet customer dataset
+│   ├── memory/                     # Customer interaction history (JSONL)
+│   └── escalations/                # Escalation tracking (JSONL)
 │
-└── hackathon_requirements/     # Problem statement & requirements
+├── test_scenarios.py                # Curated scenario tests
+├── test_features.py                 # Enhanced feature tests
+└── hackathon_requirements/          # Problem statement
 ```
 
 ---
@@ -304,40 +331,43 @@ This combination provides both **explainable** (data-based) and **intelligent** 
 
 ## 🏆 Competitive Advantages
 
-### 1. **Proactive vs Reactive**
+### 1. **100% Proactive Architecture**
 
-- Traditional: Wait for complaint → React
-- ProCX: Predict churn → Prevent → Protect revenue
+- No reactive mode - pure prevention focus
+- Continuous health monitoring across all segments
+- Intervenes before complaints occur
 
-### 2. **Multi-Language Intelligence**
+### 2. **Multi-Agent Sanskrit Cognition**
 
-- Authentic localization in 5 Indian languages
-- GPT-4 powered cultural awareness
-- Auto-detection from customer preferences
+- Layered intelligence: Bodha → Dhyana → Niti → Karuna
+- Each agent enriches state for next layer
+- Explainable, deterministic workflow via LangGraph
 
-### 3. **Comprehensive Data Integration**
+### 3. **Cultural & Festival Intelligence**
+
+- 9 festivals tracked with product relevance scoring
+- Multi-language greetings (5 languages)
+- Timing-aware seasonal messaging
+
+### 4. **Escalation Continuity**
+
+- Prevents duplicate automated handling
+- Preserves interaction history across scans
+- Human-in-the-loop integration with skip logic
+
+### 5. **Comprehensive Data Integration**
 
 - Uses ALL 10 data sources (not just customer profiles)
 - Payment intelligence for early churn signals
 - NPS-aware tone adjustment
+- Resolution effectiveness learning
 
-### 4. **Intelligent Learning**
+### 6. **Production-Ready Architecture**
 
-- Dual-layer pattern matching
-- Learns from what actually worked (CSAT analysis)
-- Recommends proven solutions
-
-### 5. **Real-Time Health Monitoring**
-
-- Dashboard visualization
-- 10-factor scoring algorithm
-- Priority-based intervention queue
-
-### 6. **Production-Ready**
-
-- Memory persistence (JSONL)
-- Error handling and fallbacks
-- Scalable LangGraph architecture
+- JSONL persistence (memory + escalations)
+- Graceful degradation on missing data
+- Compliance-aware channel selection
+- Stateless recovery pattern
 
 ---
 
@@ -519,18 +549,33 @@ MIT License - Built for AgentMAX Hackathon 2025
 ### Quick Demo Script:
 
 ```bash
-# 1. Show the differentiator (2 minutes)
-python main.py --mode proactive
+# 1. Show health dashboard (30 seconds)
+python main.py --dashboard
 
-# 2. Show the workflow (1 minute)
-python main.py --mode demo --demo-count 1
+# 2. Run proactive interventions (2 minutes)
+python main.py --interventions
 
-# 3. Highlight features:
-# - "Look at the multi-language response!"
-# - "See how we use payment data to predict churn?"
-# - "Notice the 10-factor health score?"
-# - "We're preventing problems, not just reacting to them"
+# 3. Highlight unique features:
+# - "100% proactive - no reactive mode!"
+# - "Sanskrit agent names: Bodha → Dhyana → Niti → Karuna"
+# - "Festival-aware messaging with multi-language greetings"
+# - "Escalation continuity prevents duplicate handling"
+# - "Cultural intelligence: 9 festivals, product relevance scoring"
+# - "Selective escalation: only VIP critical churn, severe CSAT"
+
+# 4. Show test scenarios (1 minute)
+python test_scenarios.py
 ```
+
+### For Detailed Architecture:
+
+See `DEMO_AND_ARCHITECTURE_GUIDE.md` for:
+
+- Full agent responsibilities and flow
+- Communication & failure handling
+- Integration path (6 steps)
+- Technical stack details
+- Customer situations handled
 
 ---
 

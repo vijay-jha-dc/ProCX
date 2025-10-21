@@ -33,16 +33,7 @@ class SentimentType(Enum):
 
 
 class EventType(Enum):
-    """Customer event types."""
-    # Reactive Events (Customer-initiated)
-    ORDER_PLACED = "order_placed"
-    ORDER_DELAYED = "order_delayed"
-    ORDER_CANCELLED = "order_cancelled"
-    COMPLAINT = "complaint"
-    INQUIRY = "inquiry"
-    FEEDBACK = "feedback"
-    RETURN_REQUEST = "return_request"
-    
+    """Customer event types - PROACTIVE ONLY."""
     # Proactive Events (System-initiated)
     PROACTIVE_RETENTION = "proactive_retention"  # Churn prevention outreach
     PROACTIVE_UPSELL = "proactive_upsell"  # Personalized upgrade offer

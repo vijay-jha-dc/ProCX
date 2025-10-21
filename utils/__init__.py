@@ -1,17 +1,20 @@
 """Utils package initialization."""
 from .memory_handler import MemoryHandler
-from .event_simulator import EventSimulator
 from .data_analytics import DataAnalytics
-from .proactive_monitor import ProactiveMonitor, CustomerHealthScore, create_proactive_monitor
-from .proactive_runner import ProactiveRunner, create_proactive_runner
+from .monitor import ProactiveMonitor, CustomerHealthScore, create_proactive_monitor
+from .runner import ProactiveRunner, create_proactive_runner
+from .escalation_tracker import EscalationTracker, EscalationRecord
+from .festival_context import FestivalContextManager
 
 __all__ = [
     "MemoryHandler",
-    "EventSimulator", 
     "DataAnalytics",
     "ProactiveMonitor",
     "CustomerHealthScore",
     "create_proactive_monitor",
     "ProactiveRunner",
-    "create_proactive_runner"
+    "create_proactive_runner",
+    "EscalationTracker",
+    "EscalationRecord",
+    "FestivalContextManager"
 ]

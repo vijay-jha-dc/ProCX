@@ -12,7 +12,7 @@ from models import AgentState, EventType
 from config.prompts import SYSTEM_PROMPTS
 from config import settings
 from utils.data_analytics import DataAnalytics
-from utils.proactive_monitor import ProactiveMonitor, CustomerHealthScore
+from utils.monitor import ProactiveMonitor, CustomerHealthScore
 
 
 class PatternAgent:

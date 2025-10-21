@@ -1,14 +1,17 @@
 """
 Empathy Agent - Generates empathetic, personalized customer responses.
+Enhanced with festival awareness and product-context sensitivity.
 """
 import json
 from typing import Dict, Any
+from datetime import datetime
 from langchain_openai import ChatOpenAI
 
 from models import AgentState
 from config.prompts import SYSTEM_PROMPTS
 from config import settings
 from utils.data_analytics import DataAnalytics
+from utils.festival_context import FestivalContextManager
 
 
 class EmpathyAgent:
@@ -34,6 +37,9 @@ class EmpathyAgent:
         
         # Initialize data analytics for personalization insights
         self.analytics = DataAnalytics()
+        
+        # Initialize festival context manager for culturally-aware messaging
+        self.festival_manager = FestivalContextManager()
     
     def _determine_tone_guidelines(self, state: AgentState) -> str:
         """
@@ -121,8 +127,54 @@ class EmpathyAgent:
         nps_data = self.analytics.get_customer_nps(state.customer)
         support_history = self.analytics.get_customer_support_history(state.customer)
         
+        # ✨ NEW: Get festival and seasonal context
+        festival_context = self.festival_manager.get_current_festival_context()
+        seasonal_context = self.festival_manager.get_seasonal_context()
+        
+        # Check if customer's preferred category is festival-relevant
+        product_relevance = None
+        if state.customer.preferred_category:
+            product_relevance = self.festival_manager.is_product_festival_relevant(
+                state.customer.preferred_category
+            )
+        
         # Build enhanced context for LLM
         enhanced_context = []
+        
+        # 🎉 Festival & Seasonal Context (Priority #1)
+        if festival_context:
+            enhanced_context.append(f"🎉 FESTIVAL CONTEXT: {festival_context['festival_name']}")
+            enhanced_context.append(f"   Significance: {festival_context['significance']}")
+            
+            # Add festival greeting
+            festival_greeting = self.festival_manager.get_festival_greeting(customer_language)
+            if festival_greeting:
+                enhanced_context.append(f"   Suggested Greeting: {festival_greeting}")
+                enhanced_context.append(f"   ⚠️ IMPORTANT: Use this festival greeting to show cultural awareness")
+            
+            # Check if customer's product is festival-relevant
+            if product_relevance and product_relevance.get('is_festival_relevant'):
+                enhanced_context.append(f"   🛍️ PRODUCT RELEVANCE: Customer's preferred category ({state.customer.preferred_category}) is HIGHLY RELEVANT to this festival")
+                enhanced_context.append(f"   Context: {product_relevance.get('context')}")
+                
+                # Special handling for critical festival purchases (e.g., diyas for Diwali)
+                if product_relevance.get('relevance_score', 0) >= 0.9:
+                    enhanced_context.append(f"   ⭐ CRITICAL PURCHASE: This is a culturally significant purchase for {festival_context['festival_name']}")
+                    enhanced_context.append(f"   → Any issue with this order has HIGH EMOTIONAL IMPACT")
+                    enhanced_context.append(f"   → Show extra empathy and urgency in resolution")
+                    
+                    # Timing-specific messaging
+                    timing = product_relevance.get('festival_timing', {})
+                    if timing.get('is_before'):
+                        enhanced_context.append(f"   → Pre-festival: Customer is preparing - time is critical")
+                    elif timing.get('is_during'):
+                        enhanced_context.append(f"   → Festival day: URGENT - Customer needs this NOW")
+                    elif timing.get('is_after'):
+                        enhanced_context.append(f"   → Post-festival: Issue may have ruined celebrations - extra care needed")
+        
+        elif seasonal_context['season'] != 'general':
+            enhanced_context.append(f"🌤️ SEASONAL CONTEXT: {seasonal_context['season'].title()} season")
+            enhanced_context.append(f"   Messaging tone: {seasonal_context['messaging_tone']}")
         
         # Language context
         if customer_language != "en":

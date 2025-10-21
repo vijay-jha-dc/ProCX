@@ -1,6 +1,6 @@
 """
 Decision Agent - Makes decisions on actions and escalations.
-Enhanced with compliance checks and multi-channel recommendations.
+Enhanced with compliance checks, multi-channel recommendations, and escalation tracking.
 """
 import json
 from typing import Dict, Any, List
@@ -10,17 +10,19 @@ from models import AgentState
 from config.prompts import SYSTEM_PROMPTS
 from config import settings
 from utils.data_analytics import DataAnalytics
+from utils.escalation_tracker import EscalationTracker
 
 
 class DecisionAgent:
-    """
-    Makes strategic decisions:
-    - Recommended actions
-    - Escalation needs
-    - Priority levels
-    - Action steps
-    - Compliance checks (opt-in marketing)
-    - Multi-channel recommendations
+    """Makes strategic proactive decisions.
+
+    Responsibilities:
+    - Recommend next best proactive action (retention offer, wellness check, premium outreach)
+    - Determine if human escalation is warranted (high churn risk VIP, severe dissatisfaction, very high LTV risk)
+    - Assign qualitative priority level (low/medium/high/critical/handled)
+    - Produce channel mix respecting marketing opt-in & regional preferences
+    - Enforce compliance (no promotional outreach for opt-out customers)
+    - Prevent duplicate automated handling when human escalation is active
     """
     
     def __init__(self, model_name: str = None, temperature: float = 0.3):
@@ -37,6 +39,9 @@ class DecisionAgent:
         
         # Initialize data analytics for support history and churn insights
         self.analytics = DataAnalytics()
+        
+        # Initialize escalation tracker to prevent duplicate handling
+        self.escalation_tracker = EscalationTracker()
     
     def _check_marketing_compliance(self, customer) -> Dict[str, Any]:
         """
@@ -156,77 +161,32 @@ class DecisionAgent:
         return channels
     
     def _should_escalate(self, state: AgentState) -> bool:
-        """
-        Determine if escalation is needed based on rules.
-        Enhanced with support history and churn reason analysis.
-        SMARTER LOGIC: Proactive events shouldn't auto-escalate just for churn risk.
-        
-        Args:
-            state: Current agent state
-            
-        Returns:
-            True if escalation is needed
+        """Determine if escalation is needed based on proactive-first rules.
+
+        Logic (proactive-only):
+        - VIP with very high churn risk (>80%)
+        - Very low CSAT history (<2.5) indicating repeated dissatisfaction
+        - High-value (LTV > $5000) with critical churn risk (>85%)
+        All other proactive situations are handled without human escalation.
         """
         # Get support history
         support_history = self.analytics.get_customer_support_history(state.customer)
         
-        # Check if this is a proactive event
-        is_proactive = state.event and state.event.event_type.value.startswith("proactive_")
-        
-        # For PROACTIVE events, use more selective escalation criteria
-        if is_proactive:
-            # Only escalate proactive if:
-            # 1. VIP customer with VERY HIGH churn risk (>80%)
-            if state.customer.is_vip and state.predicted_churn_risk and state.predicted_churn_risk >= 0.8:
-                return True
-            
-            # 2. Customer has low CSAT history (indicates past dissatisfaction)
-            if support_history:
-                avg_csat = support_history.get('avg_csat')
-                if avg_csat and avg_csat < 2.5:  # Very dissatisfied
-                    return True
-            
-            # 3. High-value customer (>$5000 LTV) with critical churn risk (>85%)
-            if state.customer.lifetime_value > 5000 and state.predicted_churn_risk and state.predicted_churn_risk >= 0.85:
-                return True
-            
-            # Otherwise, handle proactively without escalation
-            return False
-        
-        # For REACTIVE events (traditional escalation logic):
-        
-        # VIP customer with negative sentiment
-        if state.customer.is_vip and state.sentiment and \
-           state.sentiment.value in ["negative", "very_negative"]:
+        # Proactive-only escalation rules
+        # VIP with very high churn risk
+        if state.customer.is_vip and state.predicted_churn_risk and state.predicted_churn_risk >= 0.8:
             return True
-        
-        # High urgency
-        if state.urgency_level and state.urgency_level >= settings.ESCALATION_URGENCY_THRESHOLD:
-            return True
-        
-        # High churn risk (only for reactive events)
-        if state.predicted_churn_risk and \
-           state.predicted_churn_risk >= settings.CHURN_RISK_THRESHOLD:
-            return True
-        
-        # High-value customer at risk
-        if state.customer.is_high_value and \
-           state.customer_risk_score and state.customer_risk_score >= 0.7:
-            return True
-        
-        # Low CSAT history - needs escalation
+
+        # Repeated poor CSAT history
         if support_history:
             avg_csat = support_history.get('avg_csat')
-            if avg_csat and avg_csat < 3.0:
+            if avg_csat and avg_csat < 2.5:
                 return True
-        
-        # Check actual churn status for learning
-        churn_data = self.analytics.get_actual_churn_status(state.customer)
-        if churn_data and churn_data.get('is_churned'):
-            # If customer has churned, escalate similar patterns
-            if state.predicted_churn_risk and state.predicted_churn_risk >= 0.6:
-                return True
-        
+
+        # High-value critical churn risk
+        if state.customer.lifetime_value > 5000 and state.predicted_churn_risk and state.predicted_churn_risk >= 0.85:
+            return True
+
         return False
     
     def _determine_priority(self, state: AgentState) -> str:
@@ -289,7 +249,7 @@ class DecisionAgent:
     def make_decision(self, state: AgentState) -> AgentState:
         """
         Make decision on actions and escalations.
-        Enhanced with compliance checks and multi-channel recommendations.
+        Enhanced with compliance checks, multi-channel recommendations, and escalation tracking.
         
         Args:
             state: Current agent state with context and pattern analysis
@@ -300,6 +260,40 @@ class DecisionAgent:
         if not state.customer or not state.context_summary:
             state.add_message("decision_agent", "Error: Missing required data")
             return state
+        
+        # 🚨 NEW: Check if customer is already escalated to human
+        skip_decision = self.escalation_tracker.should_skip_customer(state.customer.customer_id)
+        
+        if skip_decision['should_skip']:
+            # Customer is currently being handled by human - skip automated intervention
+            state.add_message(
+                "decision_agent",
+                f"⏭️ SKIPPING: {skip_decision['reason']}"
+            )
+            state.add_message(
+                "decision_agent",
+                f"Context: {skip_decision['context']}"
+            )
+            
+            # Mark this explicitly in state
+            state.escalation_needed = False  # Don't re-escalate
+            state.priority_level = "handled"  # Special status
+            state.recommended_action = f"Customer already escalated ({skip_decision.get('escalation_id')}). Human agent handling."
+            
+            if skip_decision.get('assigned_to'):
+                state.add_message(
+                    "decision_agent",
+                    f"Assigned to: {skip_decision['assigned_to']}"
+                )
+            
+            return state
+        
+        # If stale escalation, add context
+        if skip_decision.get('is_stale'):
+            state.add_message(
+                "decision_agent",
+                f"⚠️ Note: {skip_decision['context']}"
+            )
         
         # Check marketing compliance
         compliance_info = self._check_marketing_compliance(state.customer)
@@ -364,6 +358,22 @@ class DecisionAgent:
             state.recommended_action = result.get("recommended_action", "")
             state.escalation_needed = escalation_needed  # Use rule-based decision
             state.priority_level = priority_level  # Use rule-based decision
+            
+            # 🚨 NEW: Create escalation record if escalation is needed
+            if state.escalation_needed:
+                escalation_reason = result.get("reasoning", "Automated escalation based on customer risk")
+                escalation_id = self.escalation_tracker.create_escalation(
+                    customer_id=state.customer.customer_id,
+                    reason=escalation_reason,
+                    priority=state.priority_level,
+                    health_score=state.customer_risk_score or 0,
+                    assigned_to=None  # Will be assigned by human agent team
+                )
+                
+                state.add_message(
+                    "decision_agent",
+                    f"🚨 Escalation created: {escalation_id}"
+                )
             
             # Store compliance and channel info in metadata
             if not hasattr(state, 'metadata'):

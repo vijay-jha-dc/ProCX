@@ -214,7 +214,7 @@ class ProactiveMonitor:
         self.analytics = DataAnalytics(dataset_path=self.dataset_path)
         self.health_calculator = CustomerHealthScore()
         
-        print("✓ ProactiveMonitor initialized")
+        print("[OK] ProactiveMonitor initialized")
     
     def detect_churn_risks(
         self,
@@ -234,7 +234,7 @@ class ProactiveMonitor:
             List of at-risk customer alerts with details
         """
         if self.analytics.df is None:
-            print("❌ No dataset available")
+            print("[ERROR] No dataset available")
             return []
         
         at_risk_customers = []
@@ -260,7 +260,7 @@ class ProactiveMonitor:
         
         df = df[df['lifetime_value'] >= min_lifetime_value]
         
-        print(f"\n🔍 Scanning {len(df)} customers for churn risk...")
+        print(f"\n[SCAN] Scanning {len(df)} customers for churn risk...")
         
         for _, row in df.iterrows():
             # Create Customer object
@@ -337,7 +337,7 @@ class ProactiveMonitor:
         # Sort by churn risk (highest first)
         at_risk_customers.sort(key=lambda x: x['churn_risk'], reverse=True)
         
-        print(f"⚠️  Found {len(at_risk_customers)} at-risk customers")
+        print(f"[WARNING] Found {len(at_risk_customers)} at-risk customers")
         
         return at_risk_customers
     
@@ -367,7 +367,7 @@ class ProactiveMonitor:
         # Filter high-value customers
         df = self.analytics.df[self.analytics.df['lifetime_value'] >= min_lifetime_value]
         
-        print(f"\n🔍 Scanning {len(df)} high-value customers for inactivity...")
+        print(f"\n[SCAN] Scanning {len(df)} high-value customers for inactivity...")
         
         for _, row in df.iterrows():
             customer = Customer(
@@ -407,7 +407,7 @@ class ProactiveMonitor:
                 }
                 inactive_customers.append(alert)
         
-        print(f"⚠️  Found {len(inactive_customers)} inactive high-value customers")
+        print(f"[WARNING] Found {len(inactive_customers)} inactive high-value customers")
         
         return inactive_customers
     

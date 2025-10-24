@@ -111,6 +111,7 @@ class ProCX:
             min_churn_risk: Minimum churn risk threshold (0-1)
             max_interventions: Maximum number of interventions to process
             verbose: Print detailed output
+            include_escalation_demo: Add synthetic escalation case for demo
             
         Returns:
             List of intervention results
@@ -137,6 +138,7 @@ class ProCX:
         
         # Process top N interventions
         interventions_to_process = at_risk_customers[:max_interventions]
+        
         results = []
         
         for idx, alert in enumerate(interventions_to_process, 1):

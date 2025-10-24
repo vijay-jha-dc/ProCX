@@ -236,5 +236,6 @@ class AgentState:
             "tone": self.tone,
             "messages": self.messages,
             "processing_time": self.processing_time,
-            "confidence_score": self.confidence_score
+            "confidence_score": self.confidence_score,
+            "metadata": self.metadata if hasattr(self, 'metadata') else None
         }

@@ -1,0 +1,11 @@
+# 1. Dashboard (30 sec)
+python main.py --dashboard
+
+# 2. Real-time Event (2 min)
+python demo_realtime.py
+
+# 3. Batch Processing (2 min)
+python main.py --interventions --max-interventions 2
+
+# 4. Escalation Scenario (2 min)
+python demo_escalation.py

@@ -10,6 +10,21 @@ from models import AgentState, CustomerEvent, Customer
 from config import settings
 
 
+class CustomJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder to handle Customer objects and other types."""
+    
+    def default(self, obj):
+        if isinstance(obj, Customer):
+            return obj.to_dict()
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if hasattr(obj, 'to_dict'):
+            return obj.to_dict()
+        if hasattr(obj, '__dict__'):
+            return obj.__dict__
+        return super().default(obj)
+
+
 class MemoryHandler:
     """
     Handles memory management for the agent system:
@@ -61,7 +76,7 @@ class MemoryHandler:
         if state.customer:
             customer_file = self.storage_path / f"{state.customer.customer_id}.jsonl"
             with open(customer_file, "a", encoding="utf-8") as f:
-                f.write(json.dumps(interaction) + "\n")
+                f.write(json.dumps(interaction, cls=CustomJSONEncoder) + "\n")
         
         return interaction_id
     

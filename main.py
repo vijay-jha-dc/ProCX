@@ -61,6 +61,35 @@ class ProCX:
         Returns:
             Final agent state after workflow
         """
+        # 🔥 NEW: Check if customer was already contacted today
+        recent_history = self.memory_handler.get_recent_interactions(
+            event.customer.customer_id,
+            days=1  # Last 24 hours
+        )
+        
+        if recent_history:
+            last_interaction = recent_history[0]
+            timestamp = datetime.fromisoformat(last_interaction['timestamp'])
+            hours_ago = (datetime.now() - timestamp).total_seconds() / 3600
+            
+            if hours_ago < 24:
+                if verbose:
+                    print(f"\n{'='*70}")
+                    print(f"[SKIP] Customer already contacted {hours_ago:.1f} hours ago")
+                    print(f"[SKIP] {event.customer.full_name} ({event.customer.customer_id})")
+                    print(f"{'='*70}\n")
+                
+                # Return the previous state instead of re-processing
+                return AgentState(
+                    customer=event.customer,
+                    event=event,
+                    messages=[{
+                        "agent": "duplicate_prevention",
+                        "message": f"Skipped: Already contacted {hours_ago:.1f} hours ago",
+                        "timestamp": datetime.now().isoformat()
+                    }]
+                )
+        
         if verbose:
             print(f"\n{'='*70}")
             print(f"[TARGET] PROACTIVE INTERVENTION")

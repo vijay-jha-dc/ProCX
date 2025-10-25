@@ -195,6 +195,10 @@ class AgentState:
     escalation_needed: bool = False
     priority_level: Optional[str] = None  # low, medium, high, critical
     
+    # 🎁 Proactive Incentive (Auto-approved)
+    discount_applied: Optional[float] = None  # Percentage (e.g., 10.0 for 10%)
+    discount_auto_approved: bool = False  # True if system auto-approved <=10%
+    
     # Empathy & Response
     empathy_score: Optional[float] = None
     personalized_response: Optional[str] = None
@@ -231,6 +235,8 @@ class AgentState:
             "recommended_action": self.recommended_action,
             "escalation_needed": self.escalation_needed,
             "priority_level": self.priority_level,
+            "discount_applied": self.discount_applied,
+            "discount_auto_approved": self.discount_auto_approved,
             "empathy_score": self.empathy_score,
             "personalized_response": self.personalized_response,
             "tone": self.tone,

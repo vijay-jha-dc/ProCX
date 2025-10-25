@@ -223,6 +223,13 @@ class EmpathyAgent:
         # Get tone guidelines (now includes NPS awareness)
         tone_guidelines = self._determine_tone_guidelines(state)
         
+        # 🎁 Format discount info for prompt
+        discount_info = "No discount applied"
+        if state.discount_applied and state.discount_auto_approved:
+            discount_info = f"✅ SYSTEM AUTO-APPROVED: {state.discount_applied}% discount has been applied to customer's account. MUST mention this in the message naturally (e.g., 'We've added a {state.discount_applied}% discount to your account' or 'You'll see a {state.discount_applied}% discount on your next purchase')"
+        elif state.discount_applied and not state.discount_auto_approved:
+            discount_info = f"⚠️ {state.discount_applied}% discount pending human approval - DO NOT mention discount in message yet"
+        
         # Prepare prompt with real data context
         prompt_text = SYSTEM_PROMPTS["empathy_agent"].format(
             customer_name=state.customer.full_name,
@@ -234,6 +241,7 @@ class EmpathyAgent:
             sentiment=state.sentiment.value if state.sentiment else "neutral",
             urgency_level=state.urgency_level or 3,
             recommended_action=state.recommended_action,
+            discount_info=discount_info,
             priority_level=state.priority_level or "medium",
             escalation_needed=state.escalation_needed
         )

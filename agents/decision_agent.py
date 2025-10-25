@@ -3,7 +3,7 @@ Decision Agent - Makes decisions on actions and escalations.
 Enhanced with compliance checks, multi-channel recommendations, and escalation tracking.
 """
 import json
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from langchain_openai import ChatOpenAI
 
 from models import AgentState
@@ -160,19 +160,22 @@ class DecisionAgent:
         
         return channels
     
-    def _should_escalate(self, state: AgentState) -> bool:
-        """Determine if escalation is needed based on proactive-first rules.
+    def _should_escalate(self, state: AgentState, discount_pct: Optional[float] = None) -> bool:
+        """Determine if escalation is needed.
 
-        Logic (proactive-only):
+        Reasons for escalation:
         - VIP with very high churn risk (>80%)
-        - Very low CSAT history (<2.5) indicating repeated dissatisfaction
+        - Very low CSAT history (<2.5)
         - High-value (LTV > $5000) with critical churn risk (>85%)
-        All other proactive situations are handled without human escalation.
+        - Discount >10% offered by agent (needs human approval)
         """
         # Get support history
         support_history = self.analytics.get_customer_support_history(state.customer)
         
-        # Proactive-only escalation rules
+        # Check if discount requires approval
+        if discount_pct and discount_pct > 10:
+            return True  # Discount >10% needs human approval
+        
         # VIP with very high churn risk
         if state.customer.is_vip and state.predicted_churn_risk and state.predicted_churn_risk >= 0.8:
             return True
@@ -301,10 +304,6 @@ class DecisionAgent:
         # Get recommended channels
         recommended_channels = self._recommend_channels(state)
         
-        # Determine escalation and priority
-        escalation_needed = self._should_escalate(state)
-        priority_level = self._determine_priority(state)
-        
         # Get support history and churn data for context
         support_history = self.analytics.get_customer_support_history(state.customer)
         churn_data = self.analytics.get_actual_churn_status(state.customer)
@@ -341,7 +340,7 @@ class DecisionAgent:
         # Add enhanced context
         prompt_text += enhanced_context
         
-        # Get response from LLM
+        # Get response from LLM - Agent decides EVERYTHING
         try:
             response = self.llm.invoke(prompt_text)
             content = response.content
@@ -354,10 +353,47 @@ class DecisionAgent:
             
             result = json.loads(content)
             
-            # Update state
+            # Extract agent's decisions
             state.recommended_action = result.get("recommended_action", "")
-            state.escalation_needed = escalation_needed  # Use rule-based decision
-            state.priority_level = priority_level  # Use rule-based decision
+            
+            # 🎁 Extract incentive decision from AGENT (not hardcoded)
+            incentive = result.get("incentive_offered", {})
+            discount_pct = None
+            auto_approved = False
+            
+            if incentive.get("type") == "discount" and incentive.get("discount_percentage"):
+                discount_pct = float(incentive.get("discount_percentage", 0))
+                auto_approved = discount_pct <= 10  # System rule: ≤10% = auto-approve
+                
+                state.discount_applied = discount_pct
+                state.discount_auto_approved = auto_approved
+                
+                if auto_approved:
+                    state.add_message(
+                        "decision_agent",
+                        f"✅ AUTO-APPROVED: Agent recommended {discount_pct}% discount (≤10% threshold)"
+                    )
+                else:
+                    state.add_message(
+                        "decision_agent",
+                        f"⚠️ NEEDS APPROVAL: Agent recommended {discount_pct}% discount (>10% threshold)"
+                    )
+            else:
+                # Agent chose not to offer discount or offered different incentive
+                incentive_type = incentive.get("type", "none")
+                if incentive_type != "none":
+                    state.add_message(
+                        "decision_agent",
+                        f"💡 Agent recommended: {incentive_type} (reasoning: {incentive.get('reasoning', 'N/A')})"
+                    )
+            
+            # Determine escalation based on agent's decision + system rules
+            escalation_needed = self._should_escalate(state, discount_pct)
+            state.escalation_needed = escalation_needed
+            
+            # Determine priority
+            priority_level = self._determine_priority(state)
+            state.priority_level = priority_level
             
             # 🚨 NEW: Create escalation record if escalation is needed
             if state.escalation_needed:

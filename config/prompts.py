@@ -108,12 +108,23 @@ Based on this information, decide:
 2. Whether escalation to human agent is needed
 3. Priority level (low, medium, high, critical)
 4. Specific steps to take
+5. **Whether to offer a proactive incentive/discount (and how much %)**
 
-Escalate if:
-- VIP customer with negative sentiment
+💰 PROACTIVE INCENTIVE GUIDELINES:
+- You CAN offer discounts (0-15%) to prevent churn
+- Consider: churn risk, customer value, sentiment, history
+- Discounts ≤10% will be AUTO-APPROVED by system
+- Discounts >10% will require HUMAN APPROVAL
+- You don't HAVE to offer discount - only if it makes strategic sense
+- Alternative incentives: free shipping, loyalty points, priority support
+
+ESCALATION RULES:
+- VIP customer with negative sentiment or high churn risk
 - Urgency level >= 4
 - Churn risk >= 0.7
 - High-value customer at risk
+- Discount >10% (requires approval)
+- Complex issues beyond automated handling
 
 Respond in JSON format:
 {{
@@ -121,7 +132,12 @@ Respond in JSON format:
     "escalation_needed": true/false,
     "priority_level": "low|medium|high|critical",
     "action_steps": ["step1", "step2", "step3"],
-    "reasoning": "Why this decision was made"
+    "reasoning": "Why this decision was made",
+    "incentive_offered": {{
+        "type": "discount|loyalty_points|free_shipping|none",
+        "discount_percentage": 0-15 (only if type=discount),
+        "reasoning": "Why this incentive makes sense"
+    }}
 }}
 """
 
@@ -143,6 +159,9 @@ Situation:
 
 Recommended Action:
 {recommended_action}
+
+🎁 IMPORTANT - Discount Applied (if applicable):
+{discount_info}
 
 Priority Level: {priority_level}
 Escalation Needed: {escalation_needed}

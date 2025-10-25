@@ -135,9 +135,15 @@ def create_cx_workflow_with_routing():
         # Generate empathy response even for escalated cases
         updated_state = empathy_agent(agent_state)
         
+        # Add detailed escalation context for human agent
+        escalation_message = "🚨 ESCALATED TO HUMAN AGENT\n"
+        escalation_message += f"Recommended Action: {updated_state.recommended_action}\n"
+        escalation_message += f"Priority: {updated_state.priority_level}\n"
+        escalation_message += f"Churn Risk: {updated_state.predicted_churn_risk:.1%}" if updated_state.predicted_churn_risk else ""
+        
         updated_state.add_message(
             "escalation_handler",
-            "Case escalated to human agent for immediate attention"
+            escalation_message
         )
         return {"state": updated_state}
     

@@ -49,7 +49,7 @@ def simulate_payment_failure():
     dramatic_print("\n⏰ 11:00:00 AM - VIP customer's payment transaction FAILS", 0.8)
     dramatic_print("   └─ Reason: Card expired", 0.3)
     dramatic_print("   └─ Customer: Tanya Kumar", 0.3)
-    dramatic_print("   └─ Segment: VIP | LTV: ₹15,000", 0.3)
+    dramatic_print("   └─ Segment: VIP | LTV: $15,000", 0.3)
     dramatic_print("   └─ Language: Tamil (auto-detected)", 0.3)
     
     dramatic_print("\n⚡ 11:00:01 AM - Event captured → ProCX Platform triggered", 0.8)

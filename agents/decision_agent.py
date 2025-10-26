@@ -368,28 +368,41 @@ class DecisionAgent:
                 state.discount_applied = discount_pct
                 state.discount_auto_approved = auto_approved
                 
+                # 🔥 EXECUTE if auto-approved (not just recommend)
                 if auto_approved:
+                    state.discount_executed = True
+                    state.action_taken = f"Applied {discount_pct}% discount to customer account"
                     state.add_message(
                         "decision_agent",
-                        f"✅ AUTO-APPROVED: Agent recommended {discount_pct}% discount (≤10% threshold)"
+                        f"✅ EXECUTED: {discount_pct}% discount applied to customer account"
                     )
                 else:
+                    state.discount_executed = False
+                    state.action_taken = "Escalated to human for discount approval"
                     state.add_message(
                         "decision_agent",
-                        f"⚠️ NEEDS APPROVAL: Agent recommended {discount_pct}% discount (>10% threshold)"
+                        f"⚠️ ESCALATION REQUIRED: {discount_pct}% discount needs human approval (>10% threshold)"
                     )
             else:
                 # Agent chose not to offer discount or offered different incentive
                 incentive_type = incentive.get("type", "none")
                 if incentive_type != "none":
+                    # 🔥 EXECUTE the alternative incentive
+                    state.action_taken = f"Applied {incentive_type} incentive"
                     state.add_message(
                         "decision_agent",
-                        f"💡 Agent recommended: {incentive_type} (reasoning: {incentive.get('reasoning', 'N/A')})"
+                        f"✅ EXECUTED: {incentive_type} - {incentive.get('reasoning', 'N/A')}"
                     )
+                else:
+                    state.action_taken = "Sent personalized engagement message (no incentive)"
             
             # Determine escalation based on agent's decision + system rules
             escalation_needed = self._should_escalate(state, discount_pct)
             state.escalation_needed = escalation_needed
+            
+            if escalation_needed:
+                # Override action_taken if escalated
+                state.action_taken = "Escalated to human agent"
             
             # Determine priority
             priority_level = self._determine_priority(state)

@@ -191,13 +191,15 @@ class AgentState:
     predicted_churn_risk: Optional[float] = None
     
     # Decision Making
-    recommended_action: Optional[str] = None
+    recommended_action: Optional[str] = None  # What agent suggests
+    action_taken: Optional[str] = None  # What agent EXECUTED (if not escalated)
     escalation_needed: bool = False
     priority_level: Optional[str] = None  # low, medium, high, critical
     
     # 🎁 Proactive Incentive (Auto-approved)
     discount_applied: Optional[float] = None  # Percentage (e.g., 10.0 for 10%)
     discount_auto_approved: bool = False  # True if system auto-approved <=10%
+    discount_executed: bool = False  # True if discount was actually applied
     
     # Empathy & Response
     empathy_score: Optional[float] = None
@@ -233,10 +235,12 @@ class AgentState:
             "historical_insights": self.historical_insights,
             "predicted_churn_risk": self.predicted_churn_risk,
             "recommended_action": self.recommended_action,
+            "action_taken": self.action_taken,
             "escalation_needed": self.escalation_needed,
             "priority_level": self.priority_level,
             "discount_applied": self.discount_applied,
             "discount_auto_approved": self.discount_auto_approved,
+            "discount_executed": self.discount_executed if hasattr(self, 'discount_executed') else False,
             "empathy_score": self.empathy_score,
             "personalized_response": self.personalized_response,
             "tone": self.tone,

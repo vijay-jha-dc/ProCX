@@ -1,9 +1,7 @@
 """
-Real-Time Event Simulation Demo
-Demonstrates event-driven architecture capability of ProCX Platform
-
-This simulates what happens when a critical event (like payment failure) 
-occurs and triggers instant intervention through our 4-agent system.
+Real-Time Event Demo - ProCX Platform
+======================================
+Demonstrates instant event-driven intervention for payment failures.
 """
 import sys
 import time
@@ -32,51 +30,49 @@ def dramatic_print(text: str, delay: float = 0.6):
     time.sleep(delay)
 
 
+def cleanup_demo_data():
+    """Clean up demo customer data for fresh run"""
+    demo_customer_id = "C100924"
+    
+    # Remove memory files
+    memory_file = Path(f"data/memory/{demo_customer_id}.jsonl")
+    if memory_file.exists():
+        memory_file.unlink()
+    
+    # Remove escalation files
+    escalation_dir = Path("data/escalations")
+    if escalation_dir.exists():
+        for file in escalation_dir.glob(f"*{demo_customer_id}*.jsonl"):
+            file.unlink()
+        for file in escalation_dir.glob("active_escalations.jsonl"):
+            file.unlink()
+
+
 def simulate_payment_failure():
-    """
-    Simulates a VIP customer's payment failure happening in real-time.
-    Shows instant detection and intervention through ProCX agents.
-    """
+    """Simulates real-time payment failure intervention"""
+    
+    # Clean up any previous demo data
+    cleanup_demo_data()
     
     print("\n" + "="*70)
-    print("🎬 REAL-TIME EVENT SIMULATION: Payment Failure Detection")
-    print("="*70)
-    print("   Demonstrating event-driven architecture")
-    print("   Same 4-agent workflow, triggered by live event")
+    print(" REAL-TIME EVENT: Payment Failure Detection")
     print("="*70)
     
     # Simulate timeline with dramatic effect
-    dramatic_print("\n⏰ 11:00:00 AM - VIP customer's payment transaction FAILS", 0.8)
-    dramatic_print("   └─ Reason: Card expired", 0.3)
-    dramatic_print("   └─ Customer: Tanya Kumar", 0.3)
-    dramatic_print("   └─ Segment: VIP | LTV: ₹15,000", 0.3)
-    dramatic_print("   └─ Language: Tamil (auto-detected)", 0.3)
+    dramatic_print("\n 11:00:00 AM - VIP customer payment FAILS", 0.8)
+    dramatic_print("    Customer: Tanya Kumar | VIP | LTV: $15,000", 0.3)
+    dramatic_print("    Reason: Card expired", 0.3)
     
-    dramatic_print("\n⚡ 11:00:01 AM - Event captured → ProCX Platform triggered", 0.8)
-    dramatic_print("   └─ Event Type: Payment Failure", 0.3)
-    dramatic_print("   └─ Priority: HIGH (VIP + Payment issue)", 0.3)
+    dramatic_print("\n 11:00:01 AM - Event captured, AI agents triggered", 0.8)
     
-    dramatic_print("\n🧠 11:00:02 AM - Multi-Agent Processing Pipeline:", 0.6)
-    dramatic_print("   ┌─────────────────────────────────────────────┐", 0.2)
-    dramatic_print("   │ Agent 1: Bodha (बोध) - Context Agent       │", 0.3)
-    dramatic_print("   │ └─ Analyzing sentiment & urgency...         │", 0.3)
-    dramatic_print("   │ └─ Extracting customer context...           │", 0.3)
-    dramatic_print("   ├─────────────────────────────────────────────┤", 0.2)
-    dramatic_print("   │ Agent 2: Dhyana (ध्यान) - Pattern Agent    │", 0.3)
-    dramatic_print("   │ └─ Finding churn signals...                 │", 0.3)
-    dramatic_print("   │ └─ Analyzing similar customer patterns...   │", 0.3)
-    dramatic_print("   ├─────────────────────────────────────────────┤", 0.2)
-    dramatic_print("   │ Agent 3: Niti (नीति) - Decision Agent      │", 0.3)
-    dramatic_print("   │ └─ Determining best action...               │", 0.3)
-    dramatic_print("   │ └─ Checking escalation rules...             │", 0.3)
-    dramatic_print("   ├─────────────────────────────────────────────┤", 0.2)
-    dramatic_print("   │ Agent 4: Karuna (करुणा) - Empathy Agent    │", 0.3)
-    dramatic_print("   │ └─ Generating culturally-aware message...   │", 0.3)
-    dramatic_print("   │ └─ Festival context: Diwali (Oct 23)        │", 0.3)
-    dramatic_print("   └─────────────────────────────────────────────┘", 0.2)
+    dramatic_print("\n 11:00:02 AM - Multi-Agent Processing:", 0.6)
+    dramatic_print("    Agent 1: Context Analysis", 0.3)
+    dramatic_print("    Agent 2: Pattern Recognition", 0.3)
+    dramatic_print("    Agent 3: Decision Making", 0.3)
+    dramatic_print("    Agent 4: Message Generation (Tamil)", 0.3)
     
     print("\n" + "-"*70)
-    print("⚙️  PROCESSING... (Running actual ProCX workflow)")
+    print("  PROCESSING...")
     print("-"*70)
     
     # Initialize ProCX Platform
@@ -94,7 +90,11 @@ def simulate_payment_failure():
         loyalty_tier="Platinum",
         language="ta",  # Tamil
         phone="+91-9876543210",
-        country="India"
+        signup_date="2023-01-15",
+        country="India",
+        avg_order_value=1500.0,
+        last_active_date="2025-10-25",
+        opt_in_marketing=True
     )
     
     # Create the payment failure event
@@ -116,69 +116,37 @@ def simulate_payment_failure():
     
     # Process through actual workflow
     start_time = time.time()
-    result = procx.process_proactive_event(event, verbose=False)
+    result = procx.process_proactive_event(event, verbose=True)
     elapsed = time.time() - start_time
     
     # Show results with timing
-    dramatic_print(f"\n✅ 11:00:{2+int(elapsed):02d} AM - Intervention READY!", 0.8)
+    dramatic_print(f"\n 11:00:{2+int(elapsed):02d} AM - Intervention READY!", 0.8)
     
     print("\n" + "="*70)
-    print("📊 INTERVENTION DETAILS")
+    print(" INTERVENTION DETAILS")
     print("="*70)
     
-    print(f"\n🎯 Recommended Action:")
-    print(f"   {result.recommended_action}")
+    if result.recommended_action:
+        print(f"\n Action:")
+        print(f"   {result.recommended_action}")
     
-    print(f"\n📈 Customer Analysis:")
-    print(f"   • Sentiment: {result.sentiment.value if result.sentiment else 'N/A'}")
-    print(f"   • Urgency Level: {result.urgency_level}/5")
-    print(f"   • Customer Risk Score: {result.customer_risk_score*100:.1f}%" if hasattr(result, 'customer_risk_score') and result.customer_risk_score else "   • Risk Score: HIGH")
-    print(f"   • Priority: {result.priority_level or 'HIGH'}")
+    print(f"\n Analysis:")
+    print(f"   • Urgency: {result.urgency_level}/5" if result.urgency_level else "   • Urgency: HIGH")
+    print(f"   • Priority: {result.priority_level or 'CRITICAL'}")
     
-    print(f"\n🌐 Communication Details:")
-    print(f"   • Language: Tamil (தமிழ்)")
-    print(f"   • Channel: WhatsApp (customer preferred)")
-    print(f"   • Festival Context: Diwali 2025")
-    print(f"   • Empathy Score: {result.empathy_score*100:.0f}%" if result.empathy_score else "   • Empathy Score: High")
+    print(f"\n Communication:")
+    print(f"   • Language: Tamil")
+    print(f"   • Channel: WhatsApp")
+    print(f"   • Processing Time: {elapsed:.2f} seconds")
     
-    print(f"\n⚡ Performance Metrics:")
-    print(f"   • Total Processing Time: {elapsed:.2f} seconds")
-    print(f"   • Agents Executed: 4 (Bodha → Dhyana → Niti → Karuna)")
-    print(f"   • Event to Intervention: < {int(elapsed)+1} seconds")
-    
-    print(f"\n💬 Generated Message:")
-    print("="*70)
     if result.personalized_response:
-        # Print first 400 characters of the message
-        message_preview = result.personalized_response[:400]
-        print(message_preview)
-        if len(result.personalized_response) > 400:
-            print("...")
-    else:
-        print("Message generation in progress...")
-    print("="*70)
-    
-    print("\n🏆 OUTCOME:")
-    print("-"*70)
-    print("✅ Crisis averted in < 5 seconds!")
-    print("")
-    print("📊 Comparison:")
-    print("   • Traditional Approach: Wait 3+ hours for batch scan")
-    print("                          → Customer already frustrated")
-    print("                          → Higher churn probability")
-    print("")
-    print("   • ProCX Approach: Instant detection & intervention")
-    print("                    → Issue prevented before customer notices")
-    print("                    → Culturally-aware Tamil message")
-    print("                    → Festival-appropriate greeting (Diwali)")
-    print("-"*70)
+        print(f"\n Generated Message Preview:")
+        print("-"*70)
+        safe_print(result.personalized_response[:300] + "...")
+        print("-"*70)
     
     print("\n" + "="*70)
-    print("🎯 KEY INSIGHT: Same 4-agent workflow works for BOTH:")
-    print("   • Batch Mode: Scheduled scans (python main.py --interventions)")
-    print("   • Event Mode: Real-time triggers (webhook/database listener)")
-    print("")
-    print("   Architecture is flexible and production-ready!")
+    print(f" Event-to-Intervention: {int(elapsed)+1} seconds")
     print("="*70 + "\n")
 
 

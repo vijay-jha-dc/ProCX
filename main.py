@@ -61,6 +61,35 @@ class ProCX:
         Returns:
             Final agent state after workflow
         """
+        # 🔥 NEW: Check if customer was already contacted today
+        recent_history = self.memory_handler.get_recent_interactions(
+            event.customer.customer_id,
+            days=1  # Last 24 hours
+        )
+        
+        if recent_history:
+            last_interaction = recent_history[0]
+            timestamp = datetime.fromisoformat(last_interaction['timestamp'])
+            hours_ago = (datetime.now() - timestamp).total_seconds() / 3600
+            
+            if hours_ago < 24:
+                if verbose:
+                    print(f"\n{'='*70}")
+                    print(f"[SKIP] Customer already contacted {hours_ago:.1f} hours ago")
+                    print(f"[SKIP] {event.customer.full_name} ({event.customer.customer_id})")
+                    print(f"{'='*70}\n")
+                
+                # Return the previous state instead of re-processing
+                return AgentState(
+                    customer=event.customer,
+                    event=event,
+                    messages=[{
+                        "agent": "duplicate_prevention",
+                        "message": f"Skipped: Already contacted {hours_ago:.1f} hours ago",
+                        "timestamp": datetime.now().isoformat()
+                    }]
+                )
+        
         if verbose:
             print(f"\n{'='*70}")
             print(f"[TARGET] PROACTIVE INTERVENTION")
@@ -171,7 +200,7 @@ class ProCX:
             )
             
             # Process through workflow
-            result = self.process_proactive_event(event, verbose=False)
+            result = self.process_proactive_event(event, verbose=verbose)
             results.append({
                 'customer': customer,
                 'alert': alert,
@@ -180,6 +209,20 @@ class ProCX:
             
             if verbose and result.personalized_response:
                 print(f"\n[ACTION] Recommended Action: {result.recommended_action}")
+                
+                # Show what agent DID (not just recommended)
+                if result.discount_applied:
+                    if result.discount_auto_approved:
+                        print(f"[EXECUTED] Applied {result.discount_applied}% discount to customer account")
+                    else:
+                        print(f"[PENDING] {result.discount_applied}% discount queued for human approval")
+                
+                if result.escalation_needed:
+                    print(f"[ESCALATED] Case assigned to human agent (Priority: {result.priority_level})")
+                    print(f"[CONTEXT] Agent prepared: {result.recommended_action[:100]}...")
+                else:
+                    print(f"[COMPLETED] Automated intervention executed successfully")
+                
                 print(f"[MESSAGE] Personalized Message:")
                 # Use safe_print for response that may contain Unicode
                 response_preview = f"   {result.personalized_response[:200]}..."

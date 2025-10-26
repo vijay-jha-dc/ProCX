@@ -28,8 +28,7 @@ recent_events = []
 agent_history = []
 processed_customers = {}
 
-# Cache for performance
-cached_at_risk_customers = []
+# Cache for performance (stats only - customer data is always live)
 cached_stats = {}
 cached_risk_distribution = {}
 
@@ -74,12 +73,23 @@ def get_dashboard_stats():
 @app.route('/api/customers/at-risk')
 def get_at_risk_customers():
     try:
+        global processed_customers
+        
         alerts = monitor.detect_churn_risks(min_churn_risk=0.3)
         
         at_risk_list = []
         for alert in alerts[:50]:  # Top 50
             customer = alert['customer']
-            at_risk_list.append({
+            
+            # Check if this customer has been processed
+            processed_status = None
+            processed_data = None
+            if customer.customer_id in processed_customers:
+                proc_info = processed_customers[customer.customer_id]
+                processed_status = proc_info.get('status')  # 'processing', 'sent', 'escalated'
+                processed_data = proc_info.get('intervention')  # Full intervention data
+            
+            customer_data = {
                 'id': customer.customer_id,
                 'name': f"{customer.first_name} {customer.last_name}",
                 'email': customer.email,
@@ -90,9 +100,17 @@ def get_at_risk_customers():
                 'lifetimeValue': float(customer.lifetime_value),
                 'language': customer.language or 'en',
                 'country': customer.country or 'Unknown',
-                'status': alert['risk_level'].lower(),
+                'status': processed_status if processed_status else 'pending',  # pending, processing, sent, escalated
                 'reasons': alert['reasons'][:3]
-            })
+            }
+            
+            # If processed, include intervention data
+            if processed_data:
+                customer_data['processedInfo'] = processed_data
+                customer_data['aiRecommendation'] = processed_data.get('action', '')
+                customer_data['message'] = processed_data.get('message', '')
+            
+            at_risk_list.append(customer_data)
         
         return jsonify(at_risk_list)
     except Exception as e:
@@ -317,7 +335,7 @@ def trigger_proactive_scan():
         clear_session_history()  # Clear on each scan
         
         data = request.json or {}
-        max_customers = data.get('maxCustomers', 5)
+        max_customers = data.get('maxCustomers', 10)  # Process 10 customers
         min_risk = data.get('riskThreshold', 0.7)
         
         thread = threading.Thread(
@@ -414,20 +432,13 @@ def run_agents_with_tracking(customer, event, alert):
     
     agent_results = {}
     
-    # Mark customer as PROCESSING
+    # Mark customer as PROCESSING (internal tracking only, don't emit yet)
     processed_customers[customer.customer_id] = {
         'status': 'processing',
         'customerName': f"{customer.first_name} {customer.last_name}",
         'timestamp': datetime.now().isoformat(),
         'intervention': None
     }
-    
-    # Emit status change
-    socketio.emit('customer_status_changed', {
-        'customerId': customer.customer_id,
-        'customerName': f"{customer.first_name} {customer.last_name}",
-        'status': 'processing'
-    })
     
     # Create initial state
     initial_state = AgentState(
@@ -439,13 +450,14 @@ def run_agents_with_tracking(customer, event, alert):
     print(f"[WORKFLOW] Processing customer {customer.customer_id} - {customer.first_name} {customer.last_name}")
     
     try:
-        # Emit scan started for this customer
+        # Agent 1: Bodha (Context Agent) - START
         socketio.emit('agent_started', {
-            'agent': 'Bodha',
-            'agentName': 'Context Agent',
+            'agent': 'bodha',
+            'agentName': 'Bodha - Context Agent',
             'customerId': customer.customer_id,
             'description': 'Analyzing customer context and sentiment'
         })
+        time.sleep(1.5)  # Visual delay for agent processing
         
         # Run the FULL workflow (all 4 agents sequentially)
         start_time = time.time()
@@ -453,85 +465,112 @@ def run_agents_with_tracking(customer, event, alert):
         total_duration = time.time() - start_time
         
         print(f"[WORKFLOW] Completed in {total_duration:.2f}s for customer {customer.customer_id}")
+        print(f"[AI RESULTS] Sentiment: {final_state.sentiment}, Urgency: {final_state.urgency_level}, Escalation: {final_state.escalation_needed}")
+        print(f"[AI RESULTS] Recommended Action: {final_state.recommended_action}")
+        print(f"[AI RESULTS] Message Length: {len(final_state.personalized_response) if final_state.personalized_response else 0} chars")
         
-        # Extract results from final state
-        # Agent 1: Bodha (Context) - Already completed
+        # Extract REAL results from final state (agents have already run)
         agent_results['bodha'] = {
             'sentiment': final_state.sentiment.value if final_state.sentiment else 'neutral',
-            'urgency': final_state.urgency_level or 3,
-            'riskScore': final_state.customer_risk_score or alert['churn_risk'],
-            'duration': round(total_duration * 0.25, 2)  # ~25% of time
+            'urgency': final_state.urgency_level if final_state.urgency_level else 3,
+            'riskScore': final_state.customer_risk_score if final_state.customer_risk_score else alert['churn_risk'],
+            'contextSummary': final_state.context_summary or 'Customer context analyzed',
+            'duration': round(total_duration * 0.25, 2)
         }
+        
+        # Agent 1: Bodha (Context Agent) - COMPLETE
         socketio.emit('agent_completed', {
-            'agent': 'Bodha',
+            'agent': 'bodha',
             'customerId': customer.customer_id,
             'results': agent_results['bodha']
         })
+        time.sleep(0.5)
         
-        # Agent 2: Dhyana (Pattern)
+        # Agent 2: Dhyana (Pattern Agent) - START
         socketio.emit('agent_started', {
-            'agent': 'Dhyana',
-            'agentName': 'Pattern Agent',
+            'agent': 'dhyana',
+            'agentName': 'Dhyana - Pattern Agent',
             'customerId': customer.customer_id,
             'description': 'Identifying behavioral patterns and churn signals'
         })
+        time.sleep(1.5)
         
+        # Extract REAL pattern analysis from final_state
         agent_results['dhyana'] = {
-            'churnRisk': int(alert['churn_risk'] * 100),
+            'churnRisk': int((final_state.predicted_churn_risk or alert['churn_risk']) * 100),
             'patterns': alert['reasons'][:2] if alert.get('reasons') else [],
-            'similarCases': 3,
+            'historicalInsights': final_state.historical_insights or 'Pattern analysis complete',
+            'similarCases': len(final_state.similar_patterns) if final_state.similar_patterns else 3,
             'duration': round(total_duration * 0.25, 2)
         }
+        
+        # Agent 2: Dhyana (Pattern Agent) - COMPLETE
         socketio.emit('agent_completed', {
-            'agent': 'Dhyana',
+            'agent': 'dhyana',
             'customerId': customer.customer_id,
             'results': agent_results['dhyana']
         })
+        time.sleep(0.5)
         
-        # Agent 3: Niti (Decision)
+        # Agent 3: Niti (Decision Agent) - START
         socketio.emit('agent_started', {
-            'agent': 'Niti',
-            'agentName': 'Decision Agent',
+            'agent': 'niti',
+            'agentName': 'Niti - Decision Agent',
             'customerId': customer.customer_id,
             'description': 'Determining best intervention strategy'
         })
+        time.sleep(1.5)
         
+        # Extract REAL decision from final_state
         agent_results['niti'] = {
-            'action': final_state.recommended_action or 'Offer personalized discount',
+            'action': final_state.recommended_action or 'Personalized outreach recommended',
+            'actionTaken': final_state.action_taken or 'Preparing intervention',
             'priority': final_state.priority_level or 'high',
             'channels': ['email', 'sms'],
-            'escalate': final_state.escalation_needed or False,
+            'escalate': final_state.escalation_needed,
+            'discountApplied': final_state.discount_applied if final_state.discount_applied else None,
+            'discountAutoApproved': final_state.discount_auto_approved if hasattr(final_state, 'discount_auto_approved') else False,
             'duration': round(total_duration * 0.25, 2)
         }
+        
+        # Agent 3: Niti (Decision Agent) - COMPLETE
         socketio.emit('agent_completed', {
-            'agent': 'Niti',
+            'agent': 'niti',
             'customerId': customer.customer_id,
             'results': agent_results['niti']
         })
+        time.sleep(0.5)
         
-        # Agent 4: Karuna (Empathy)
+        # Agent 4: Karuna (Empathy Agent) - START
         socketio.emit('agent_started', {
-            'agent': 'Karuna',
-            'agentName': 'Empathy Agent',
+            'agent': 'karuna',
+            'agentName': 'Karuna - Empathy Agent',
             'customerId': customer.customer_id,
             'description': 'Generating personalized message'
         })
+        time.sleep(1.5)
         
-        message = final_state.personalized_response or f"Personalized message for {customer.first_name}"
+        # Extract REAL personalized message from final_state
+        full_message = final_state.personalized_response or f"Dear {customer.first_name}, we value your business and would like to address your concerns."
         agent_results['karuna'] = {
-            'message': message[:200] + '...' if len(message) > 200 else message,
+            'message': full_message,  # Send FULL message to frontend
+            'messagePreview': full_message[:200] + '...' if len(full_message) > 200 else full_message,
             'language': customer.language or 'en',
             'tone': final_state.tone or 'empathetic',
+            'empathyScore': final_state.empathy_score if final_state.empathy_score else 0.8,
             'duration': round(total_duration * 0.25, 2)
         }
+        
+        # Agent 4: Karuna (Empathy Agent) - COMPLETE
         socketio.emit('agent_completed', {
-            'agent': 'Karuna',
+            'agent': 'karuna',
             'customerId': customer.customer_id,
             'results': agent_results['karuna']
         })
+        time.sleep(0.5)
         
-        # Create intervention summary
-        is_escalated = agent_results.get('niti', {}).get('escalate', False) or final_state.escalation_needed
+        # Create intervention summary with REAL AI data
+        is_escalated = final_state.escalation_needed
         
         intervention = {
             'id': f"INT_{customer.customer_id}_{int(time.time())}",
@@ -541,21 +580,31 @@ def run_agents_with_tracking(customer, event, alert):
             'type': 'proactive',
             'healthScore': int(alert['health_score'] * 100),
             'churnRisk': int(alert['churn_risk'] * 100),
-            'priority': agent_results.get('niti', {}).get('priority', 'medium'),
-            'action': agent_results.get('niti', {}).get('action', 'Monitor customer'),
-            'message': agent_results.get('karuna', {}).get('message', ''),
+            'priority': final_state.priority_level or 'high',
+            'action': final_state.recommended_action or 'Personalized retention outreach',
+            'aiRecommendation': final_state.recommended_action or 'AI analysis complete',
+            'message': agent_results['karuna']['message'],  # FULL AI-generated message
             'language': customer.language or 'en',
             'agents': agent_results,
             'escalated': is_escalated,
-            'status': 'escalated' if is_escalated else 'sent',  # Non-critical = auto-sent
-            'channels': agent_results.get('niti', {}).get('channels', ['email'])
+            'status': 'escalated' if is_escalated else 'sent',
+            'channels': ['email', 'sms'],
+            'sentiment': final_state.sentiment.value if final_state.sentiment else 'neutral',
+            'urgencyLevel': final_state.urgency_level,
+            'discountApplied': final_state.discount_applied,
+            'actionTaken': final_state.action_taken or 'Intervention prepared'
         }
         
-        # Log the action taken
+        # Log the action taken with REAL AI data
         if is_escalated:
-            print(f"[CRITICAL] Customer {customer.customer_id} escalated to human - VIP/High-LTV/Low-CSAT")
+            print(f"[CRITICAL] Customer {customer.customer_id} escalated to human")
+            print(f"[REASON] {final_state.recommended_action}")
         else:
-            print(f"[AUTO-SENT] Message auto-sent to {customer.customer_id} via {intervention['channels']}")
+            print(f"[AUTO-SENT] Message ready for {customer.customer_id} via {intervention['channels']}")
+            print(f"[AI ACTION] {final_state.recommended_action}")
+            if final_state.discount_applied:
+                print(f"[DISCOUNT] {final_state.discount_applied}% discount applied")
+            print(f"[MESSAGE PREVIEW] {agent_results['karuna']['message'][:150]}...")
         
         # Update processed_customers with final status
         final_status = 'escalated' if is_escalated else 'sent'
@@ -645,17 +694,14 @@ def get_risk_distribution():
 
 @app.route('/api/customers/priority-queue')
 def get_priority_queue():
-    """Get top priority customers for the sidebar - USES CACHED DATA for instant load"""
+    """Get top priority customers for the sidebar - USES LIVE DATA for accuracy"""
     try:
         limit = int(request.args.get('limit', 10))  # Default to 10 for TOP 10
         
-        # Use CACHED at-risk customers instead of recalculating
-        if not cached_at_risk_customers:
-            # Fallback if cache is empty (shouldn't happen after startup)
-            alerts = monitor.detect_churn_risks(min_churn_risk=0.3)
-            sorted_alerts = sorted(alerts, key=lambda x: x['churn_risk'], reverse=True)[:limit]
-        else:
-            sorted_alerts = cached_at_risk_customers[:limit]
+        # Always use LIVE data to match processing - same as run_proactive_scan_with_agents
+        alerts = monitor.detect_churn_risks(min_churn_risk=0.3)
+        # Sort by churn_risk descending to get top 10
+        sorted_alerts = sorted(alerts, key=lambda x: x['churn_risk'], reverse=True)[:limit]
         
         priority_queue = []
         for alert in sorted_alerts:
@@ -792,9 +838,9 @@ def handle_disconnect():
 
 def run_initial_health_scan():
     """
-    Run initial health scan on startup and CACHE results for instant dashboard load
+    Run initial health scan on startup and CACHE stats (not customer data)
     """
-    global cached_at_risk_customers, cached_stats, cached_risk_distribution
+    global cached_stats, cached_risk_distribution
     
     print("\n🔍 Running initial health scan...")
     try:
@@ -828,19 +874,18 @@ def run_initial_health_scan():
             "low": {"count": len(analytics.df) - critical - high - medium, "percentage": round(((len(analytics.df) - critical - high - medium) / total) * 100) if total > 0 else 0, "color": "#10b981"}
         }
         
-        # CACHE top 10 at-risk customers (store raw alerts for later formatting)
-        cached_at_risk_customers = alerts[:10]
+        # NOTE: Customer data is NOT cached - always fetched live via /api/customers/priority-queue
         
         print(f"   ✓ Found {len(alerts)} at-risk customers")
         print(f"   ✓ Critical: {critical} | High: {high} | Medium: {medium} | Low: {low}")
-        print(f"   ✓ Data CACHED for instant dashboard load")
+        print(f"   ✓ Stats CACHED (customer data always live)")
         
         # Print top 10 customer IDs for demo selection
-        print(f"\n   📋 Top 10 At-Risk Customers (auto-processing first 3):")
+        print(f"\n   📋 Top 10 At-Risk Customers (auto-processing all 10):")
         for i, alert in enumerate(alerts[:10], 1):
             cust = alert['customer']
             risk_pct = int(alert['churn_risk'] * 100)
-            status_marker = "← Auto-processing" if i <= 3 else ""
+            status_marker = "← Auto-processing"
             print(f"      {i}. {cust.customer_id} - {cust.first_name} {cust.last_name} ({risk_pct}% risk, {cust.segment}) {status_marker}")
         
         return alerts
@@ -854,16 +899,15 @@ def run_background_interventions():
     Processes top customers by churn risk to show mix of auto-sent and escalated.
     By the time UI loads, these customers will show as SENT or ESCALATED.
     """
-    print("\n🤖 Auto-processing first 3 customers for demo...")
+    print("\n🤖 Auto-processing first 10 customers for demo...")
     try:
         # Get at-risk customers sorted by churn risk (highest first)
         alerts = monitor.detect_churn_risks(min_churn_risk=0.3)
         
-        # Take first 3 from the sorted list (highest risk customers)
-        # This increases chance of getting at least 1 escalation (VIP, low CSAT, or high LTV)
-        alerts = alerts[:3]
+        # Take first 10 from the sorted list (highest risk customers)
+        alerts = alerts[:10]
         
-        if len(alerts) < 3:
+        if len(alerts) < 10:
             print(f"   ⏭️  Only {len(alerts)} at-risk customers found, processing all")
         
         # Process customers in background thread
@@ -882,13 +926,16 @@ def run_background_interventions():
                     if len(recent_interventions) > 50:
                         recent_interventions.pop()
                     
+                    # 🔥 EMIT to any connected clients (so UI gets the data)
+                    socketio.emit('intervention_complete', intervention)
+                    
                     status = intervention.get('status', 'sent')
                     print(f"   ✓ {customer.first_name} {customer.last_name} → {status.upper()}")
                     
                 except Exception as e:
                     print(f"   ✗ Error processing {customer.customer_id}: {e}")
             
-            print(f"   ✅ Startup processing complete! 3 customers ready for demo.")
+            print(f"   ✅ Startup processing complete! {len(alerts)} customers ready for demo.")
         
         thread = threading.Thread(target=process_startup_customers, daemon=True)
         thread.start()
@@ -902,7 +949,8 @@ if __name__ == '__main__':
     print("📡 WebSocket + 4-Agent tracking")
     
     run_initial_health_scan()
-    run_background_interventions()
+    # DON'T auto-process on startup - let user trigger from UI for session-based history
+    # run_background_interventions()
     
     print("🌐 http://localhost:5000")
     print("✅ Server ready!")

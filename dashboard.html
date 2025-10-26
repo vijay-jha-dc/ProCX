@@ -617,57 +617,138 @@
         /* Toast Notification System */
         .toast-container {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 24px;
+            right: 24px;
             z-index: 9999;
             pointer-events: none;
         }
 
         .toast {
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 100%
+            );
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
             color: white;
-            padding: 16px 24px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            backdrop-filter: blur(10px);
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.1);
             pointer-events: auto;
-            transform: translateX(400px);
+            transform: translateX(450px) scale(0.9);
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-width: 350px;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 420px;
+            min-width: 340px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toast::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transition: left 0.5s;
+        }
+
+        .toast:hover::before {
+            left: 100%;
         }
 
         .toast.show {
-            transform: translateX(0);
+            transform: translateX(0) scale(1);
             opacity: 1;
         }
 
         .toast.hide {
-            transform: translateX(400px);
+            transform: translateX(450px) scale(0.9);
             opacity: 0;
         }
 
         .toast-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            letter-spacing: 0.3px;
         }
 
         .toast-body {
-            font-size: 13px;
-            opacity: 0.9;
-            line-height: 1.4;
+            font-size: 14px;
+            opacity: 0.92;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.95);
+            padding-left: 32px;
+            font-weight: 400;
         }
 
         .toast-icon {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             flex-shrink: 0;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+            }
+            50% {
+                transform: scale(1.1);
+                filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3));
+            }
+        }
+
+        /* Success toast accent */
+        .toast[data-type="success"] {
+            border-left: 3px solid rgba(16, 185, 129, 0.8);
+            background: linear-gradient(
+                135deg,
+                rgba(16, 185, 129, 0.15) 0%,
+                rgba(255, 255, 255, 0.05) 100%
+            );
+        }
+
+        /* Info toast accent */
+        .toast[data-type="info"] {
+            border-left: 3px solid rgba(59, 130, 246, 0.8);
+            background: linear-gradient(
+                135deg,
+                rgba(59, 130, 246, 0.15) 0%,
+                rgba(255, 255, 255, 0.05) 100%
+            );
+        }
+
+        /* Error toast accent */
+        .toast[data-type="error"] {
+            border-left: 3px solid rgba(239, 68, 68, 0.8);
+            background: linear-gradient(
+                135deg,
+                rgba(239, 68, 68, 0.15) 0%,
+                rgba(255, 255, 255, 0.05) 100%
+            );
         }
 
         /* Agent Image Container */
@@ -1811,24 +1892,9 @@
                                 <!-- Glow Background -->
                                 <div class="agent-glow"></div>
                                 
-                                <!-- Atom Animation (when active) -->
-                                <div x-show="currentAgent === 'bodha' && scanInProgress" class="agent-atom">
-                                    <div class="atom-core"></div>
-                                    <div class="atom-orbit atom-orbit-1">
-                                        <div class="electron electron-1"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-2">
-                                        <div class="electron electron-2"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-3">
-                                        <div class="electron electron-3"></div>
-                                    </div>
-                                </div>
-                                
                                 <!-- Agent Image -->
                                 <div class="agent-image-container">
                                     <img src="assets/bodha.png" alt="Bodha" class="agent-image">
-                                    <i x-show="completedAgents.includes('bodha')" class="fas fa-check-circle agent-check-mark"></i>
                                 </div>
                                 
                                 <!-- Agent Name -->
@@ -1845,24 +1911,9 @@
                                 <!-- Glow Background -->
                                 <div class="agent-glow"></div>
                                 
-                                <!-- Atom Animation (when active) -->
-                                <div x-show="currentAgent === 'dhyana' && scanInProgress" class="agent-atom">
-                                    <div class="atom-core"></div>
-                                    <div class="atom-orbit atom-orbit-1">
-                                        <div class="electron electron-1"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-2">
-                                        <div class="electron electron-2"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-3">
-                                        <div class="electron electron-3"></div>
-                                    </div>
-                                </div>
-                                
                                 <!-- Agent Image -->
                                 <div class="agent-image-container">
                                     <img src="assets/Dhyana.png" alt="Dhyana" class="agent-image">
-                                    <i x-show="completedAgents.includes('dhyana')" class="fas fa-check-circle agent-check-mark"></i>
                                 </div>
                                 
                                 <!-- Agent Name -->
@@ -1879,24 +1930,9 @@
                                 <!-- Glow Background -->
                                 <div class="agent-glow"></div>
                                 
-                                <!-- Atom Animation (when active) -->
-                                <div x-show="currentAgent === 'niti' && scanInProgress" class="agent-atom">
-                                    <div class="atom-core"></div>
-                                    <div class="atom-orbit atom-orbit-1">
-                                        <div class="electron electron-1"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-2">
-                                        <div class="electron electron-2"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-3">
-                                        <div class="electron electron-3"></div>
-                                    </div>
-                                </div>
-                                
                                 <!-- Agent Image -->
                                 <div class="agent-image-container">
                                     <img src="assets/niti.png" alt="Niti" class="agent-image">
-                                    <i x-show="completedAgents.includes('niti')" class="fas fa-check-circle agent-check-mark"></i>
                                 </div>
                                 
                                 <!-- Agent Name -->
@@ -1913,24 +1949,9 @@
                                 <!-- Glow Background -->
                                 <div class="agent-glow"></div>
                                 
-                                <!-- Atom Animation (when active) -->
-                                <div x-show="currentAgent === 'karuna' && scanInProgress" class="agent-atom">
-                                    <div class="atom-core"></div>
-                                    <div class="atom-orbit atom-orbit-1">
-                                        <div class="electron electron-1"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-2">
-                                        <div class="electron electron-2"></div>
-                                    </div>
-                                    <div class="atom-orbit atom-orbit-3">
-                                        <div class="electron electron-3"></div>
-                                    </div>
-                                </div>
-                                
                                 <!-- Agent Image -->
                                 <div class="agent-image-container">
                                     <img src="assets/karuna.png" alt="Karuna" class="agent-image">
-                                    <i x-show="completedAgents.includes('karuna')" class="fas fa-check-circle agent-check-mark"></i>
                                 </div>
                                 
                                 <!-- Agent Name -->
@@ -2071,10 +2092,12 @@
                                                 <div class="flex-1">
                                                     <div class="flex items-center gap-2 mb-1">
                                                         <h4 class="font-bold text-white text-sm" x-text="customer.name"></h4>
-                                                        <!-- Status Badge -->
-                                                        <span class="badge text-xs px-2 py-0.5 rounded-full font-medium"
-                                                              :class="customer.statusClass"
-                                                              x-text="customer.statusText"></span>
+                                                        <!-- Priority Tag -->
+                                                        <span class="badge text-xs px-2.5 py-0.5 rounded-full font-bold uppercase"
+                                                              :class="customer.churnRisk >= 80 ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 
+                                                                      customer.churnRisk >= 60 ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 
+                                                                      'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'"
+                                                              x-text="customer.churnRisk >= 80 ? 'CRITICAL' : customer.churnRisk >= 60 ? 'HIGH' : 'MEDIUM'"></span>
                                                     </div>
                                                     <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
                                                         <span x-text="customer.id"></span>
@@ -2098,18 +2121,8 @@
                                                     <i class="fas fa-dollar-sign"></i>
                                                     LTV: $<span x-text="customer.ltv?.toLocaleString() || customer.lifetimeValue?.toLocaleString()"></span>
                                                 </span>
-                                                <span x-show="customer.status === 'scheduled'" class="text-purple-400">
-                                                    <i class="fas fa-calendar-check"></i>
-                                                    Monitoring
-                                                </span>
-                                                <span x-show="customer.interventionSent && customer.status !== 'scheduled'" class="text-blue-400">
-                                                    <i class="fas fa-paper-plane"></i>
-                                                    Sent
-                                                </span>
-                                                <span x-show="!customer.interventionSent && customer.status !== 'scheduled'" class="text-gray-400">
-                                                    <i class="fas fa-clock"></i>
-                                                    Pending
-                                                </span>
+                                                <!-- Status Badge -->
+                                                <span class="px-2 py-0.5 rounded text-xs font-medium" :class="customer.statusClass" x-text="customer.statusText"></span>
                                             </div>
                                         </div>
                                     </template>
@@ -2134,7 +2147,15 @@
                                             <span x-text="selectedAtRiskCustomer?.name?.charAt(0)"></span>
                                         </div>
                                         <div>
-                                            <h2 class="text-2xl font-bold text-white" x-text="selectedAtRiskCustomer?.name"></h2>
+                                            <div class="flex items-center gap-3 mb-1">
+                                                <h2 class="text-2xl font-bold text-white" x-text="selectedAtRiskCustomer?.name"></h2>
+                                                <!-- Priority Tag (Red Oval) -->
+                                                <span class="badge text-xs px-3 py-1 rounded-full font-bold uppercase"
+                                                      :class="selectedAtRiskCustomer?.churnRisk >= 80 ? 'bg-red-500/20 text-red-300 border-2 border-red-500' : 
+                                                              selectedAtRiskCustomer?.churnRisk >= 60 ? 'bg-orange-500/20 text-orange-300 border-2 border-orange-500' : 
+                                                              'bg-yellow-500/20 text-yellow-300 border-2 border-yellow-500'"
+                                                      x-text="selectedAtRiskCustomer?.churnRisk >= 80 ? 'CRITICAL' : selectedAtRiskCustomer?.churnRisk >= 60 ? 'HIGH' : 'MEDIUM'"></span>
+                                            </div>
                                             <div class="flex items-center gap-3 text-sm text-gray-400 mt-1">
                                                 <span x-text="selectedAtRiskCustomer?.id"></span>
                                                 <span>•</span>
@@ -2182,31 +2203,72 @@
                                     </div>
                                 </div>
                                 
-                                <!-- AI Recommendation -->
-                                <div class="mb-6">
+                                <!-- AI Recommendation (Only show if processed) -->
+                                <div class="mb-6" x-show="selectedAtRiskCustomer?.status === 'sent' || selectedAtRiskCustomer?.status === 'escalated'">
                                     <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
                                         <i class="fas fa-robot text-pink-400"></i>
-                                        AI Recommendation (Karuna)
+                                        AI Recommendation
                                     </h3>
                                     <div class="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border border-pink-500/30 rounded-lg p-4">
-                                        <p class="text-sm text-gray-300 leading-relaxed" x-text="selectedAtRiskCustomer?.aiRecommendation || '⏳ Pending agent analysis - Click \"Process Customers\" to generate personalized recommendation'"></p>
+                                        <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" x-text="selectedAtRiskCustomer?.processedInfo?.intervention?.action || selectedAtRiskCustomer?.processedInfo?.intervention?.recommendation || 'Recommendation from AI agents'"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Action Taken by AI (Only show if escalated) -->
+                                <div class="mb-6" x-show="selectedAtRiskCustomer?.status === 'escalated' && selectedAtRiskCustomer?.processedInfo?.intervention?.actionTaken">
+                                    <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+                                        <i class="fas fa-check-circle text-green-400"></i>
+                                        Action Taken by AI
+                                    </h3>
+                                    <div class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-lg p-4">
+                                        <div class="flex items-start gap-3">
+                                            <i class="fas fa-tag text-green-400 mt-1"></i>
+                                            <div>
+                                                <p class="text-sm font-medium text-green-300 mb-1">Automated Actions Applied</p>
+                                                <p class="text-sm text-gray-300 leading-relaxed" x-text="selectedAtRiskCustomer?.processedInfo?.intervention?.actionTaken"></p>
+                                                <div class="mt-2 text-xs text-gray-400">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    System approved within policy limits - ready for human review
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <!-- Intervention Composer (Show only if NOT sent yet) -->
-                                <div x-show="!selectedAtRiskCustomer?.humanInterventionSent" class="mb-6">
+                                <!-- Intervention Message Section -->
+                                <div class="mb-6">
                                     <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
                                         <i class="fas fa-paper-plane text-blue-400"></i>
                                         Intervention Message
                                     </h3>
                                     <div class="space-y-3">
-                                        <div>
-                                            <label class="block text-xs text-gray-400 mb-1.5">AI-Generated Message (Editable)</label>
+                                        <!-- For SENT customers: Show uneditable message -->
+                                        <div x-show="selectedAtRiskCustomer?.status === 'sent'">
+                                            <label class="block text-xs text-gray-400 mb-1.5">AI-Generated Message (Sent)</label>
+                                            <div class="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white max-h-64 overflow-y-auto">
+                                                <p class="whitespace-pre-wrap" x-text="selectedAtRiskCustomer?.processedInfo?.intervention?.message || atRiskMessage || 'Message sent to customer'"></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- For ESCALATED customers: Show editable message -->
+                                        <div x-show="selectedAtRiskCustomer?.status === 'escalated'">
+                                            <label class="block text-xs text-gray-400 mb-1.5">AI-Generated Message (Editable - Review & Send)</label>
                                             <textarea x-model="atRiskMessage" 
                                                       rows="8"
                                                       class="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white focus:border-primary focus:outline-none resize-none"
-                                                      placeholder="AI will generate a personalized message based on customer context..."></textarea>
+                                                      placeholder="AI-generated message will appear here after processing..."></textarea>
                                         </div>
+                                        
+                                        <!-- For PENDING customers: Show disabled message -->
+                                        <div x-show="selectedAtRiskCustomer?.status === 'pending'">
+                                            <label class="block text-xs text-gray-400 mb-1.5">Message (AI will generate after processing)</label>
+                                            <textarea x-model="atRiskMessage" 
+                                                      rows="8"
+                                                      disabled
+                                                      class="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white focus:border-primary focus:outline-none resize-none opacity-50 cursor-not-allowed"
+                                                      placeholder="Click 'Process Customers' to generate AI message..."></textarea>
+                                        </div>
+                                        
                                         <div class="flex items-center gap-2 text-xs text-gray-400">
                                             <i class="fas fa-language text-orange-400"></i>
                                             <span>Language: <span class="text-white font-medium" x-text="selectedAtRiskCustomer?.language || 'English'"></span></span>
@@ -2217,8 +2279,8 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Internal Notes (Show only if NOT sent yet) -->
-                                <div x-show="!selectedAtRiskCustomer?.humanInterventionSent" class="mb-6">
+                                <!-- Internal Notes (Show only for escalated customers) -->
+                                <div x-show="selectedAtRiskCustomer?.status === 'escalated'" class="mb-6">
                                     <label class="block text-xs text-gray-400 mb-1.5">Internal Notes (Optional)</label>
                                     <textarea x-model="atRiskNotes" 
                                               rows="3"
@@ -2226,31 +2288,17 @@
                                               placeholder="Add notes for future reference..."></textarea>
                                 </div>
                                 
-                                <!-- Sent Intervention Info (Show only AFTER sent) -->
-                                <div x-show="selectedAtRiskCustomer?.humanInterventionSent" class="mb-6">
-                                    <div class="bg-gradient-to-br from-blue-500/10 to-green-500/10 border border-blue-500/30 rounded-lg p-6">
-                                        <div class="flex items-center gap-3 mb-4">
-                                            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
-                                            <div>
-                                                <h3 class="font-bold text-white text-lg">Intervention Sent Successfully</h3>
-                                                <p class="text-xs text-gray-400" x-text="'Sent on: ' + new Date(selectedAtRiskCustomer?.interventionDate).toLocaleString()"></p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="mb-4">
-                                            <label class="block text-xs text-gray-400 mb-2">Message Sent:</label>
-                                            <div class="bg-gray-800/50 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-wrap" x-text="selectedAtRiskCustomer?.humanMessage"></div>
-                                        </div>
-                                        
-                                        <div x-show="selectedAtRiskCustomer?.humanNotes">
-                                            <label class="block text-xs text-gray-400 mb-2">Internal Notes:</label>
-                                            <div class="bg-gray-800/50 rounded-lg p-3 text-sm text-gray-400 italic" x-text="selectedAtRiskCustomer?.humanNotes"></div>
-                                        </div>
-                                    </div>
+                                <!-- View Journey Button (Only for sent/escalated customers) -->
+                                <div class="mb-6" x-show="selectedAtRiskCustomer?.status === 'sent' || selectedAtRiskCustomer?.status === 'escalated'">
+                                    <button @click="viewAgentJourney(selectedAtRiskCustomer)" 
+                                            class="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold transition-all flex items-center justify-center gap-2">
+                                        <i class="fas fa-route"></i>
+                                        View 4-Agent Processing Journey
+                                    </button>
                                 </div>
                                 
-                                <!-- Action Buttons (Show only if NOT sent yet) -->
-                                <div x-show="!selectedAtRiskCustomer?.humanInterventionSent" class="flex gap-3">
+                                <!-- Action Buttons (Show only for escalated customers needing human intervention) -->
+                                <div x-show="selectedAtRiskCustomer?.status === 'escalated'" class="flex gap-3">
                                     <button @click="sendIntervention()" 
                                             class="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-primary text-white font-semibold transition-all flex items-center justify-center gap-2">
                                         <i class="fas fa-paper-plane"></i>
@@ -2261,6 +2309,13 @@
                                         <i class="fas fa-clock"></i>
                                         Schedule
                                     </button>
+                                </div>
+                                
+                                <!-- Pending State Message -->
+                                <div x-show="selectedAtRiskCustomer?.status === 'pending'" class="bg-gray-800/50 border border-gray-700 rounded-lg p-6 text-center">
+                                    <i class="fas fa-clock text-gray-500 text-3xl mb-3"></i>
+                                    <h3 class="text-lg font-bold text-gray-400 mb-2">Awaiting Processing</h3>
+                                    <p class="text-sm text-gray-500">Click "Process Customers" to run 4-agent analysis on this customer</p>
                                 </div>
                             </div>
                             
@@ -2345,13 +2400,6 @@
                                         </div>
                                     </div>
                                     <div class="flex items-start gap-2">
-                                        <i class="fas fa-exclamation-circle text-purple-400 mt-1"></i>
-                                        <div>
-                                            <span class="text-gray-400">Urgency Level:</span>
-                                            <span class="text-white font-medium ml-2" x-text="agentJourneyData?.intervention?.agents?.bodha?.urgency_level || 'N/A'"></span>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start gap-2">
                                         <i class="fas fa-chart-line text-purple-400 mt-1"></i>
                                         <div>
                                             <span class="text-gray-400">Risk Analysis:</span>
@@ -2409,15 +2457,13 @@
                                             <span class="text-white font-medium ml-2" x-text="agentJourneyData?.intervention?.action || 'Send personalized re-engagement offer'"></span>
                                         </div>
                                     </div>
-                                    <div class="flex items-start gap-2">
-                                        <i class="fas fa-flag text-orange-400 mt-1"></i>
-                                        <div>
-                                            <span class="text-gray-400">Priority:</span>
-                                            <span class="badge text-xs ml-2"
-                                                  :class="agentJourneyData?.intervention?.priority === 'critical' ? 'badge-critical' : 
-                                                          agentJourneyData?.intervention?.priority === 'high' ? 'badge-high' : 'badge-medium'"
-                                                  x-text="(agentJourneyData?.intervention?.priority || 'medium').toUpperCase()"></span>
-                                        </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-flag text-orange-400"></i>
+                                        <span class="text-gray-400">Priority:</span>
+                                        <span class="badge text-xs"
+                                              :class="agentJourneyData?.intervention?.priority === 'critical' ? 'badge-critical' : 
+                                                      agentJourneyData?.intervention?.priority === 'high' ? 'badge-high' : 'badge-medium'"
+                                              x-text="(agentJourneyData?.intervention?.priority || 'medium').toUpperCase()"></span>
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <i class="fas fa-user-shield text-orange-400 mt-1"></i>
@@ -2618,6 +2664,27 @@
                                         </div>
                                     </div>
 
+                                    <!-- Action Taken by AI -->
+                                    <div>
+                                        <h3 class="font-bold mb-2 flex items-center gap-2">
+                                            <i class="fas fa-check-circle text-green-400"></i>
+                                            Action Taken by AI
+                                        </h3>
+                                        <div class="glass-card p-4 bg-green-500/5 border border-green-500/20">
+                                            <div class="flex items-start gap-3">
+                                                <i class="fas fa-tag text-green-400 mt-1"></i>
+                                                <div>
+                                                    <p class="text-sm font-medium text-green-300 mb-1">Discount Applied</p>
+                                                    <p class="text-sm text-gray-300" x-text="selectedEscalation?.actionTaken || 'Applied 10.0% discount to customer account'"></p>
+                                                    <div class="mt-2 text-xs text-gray-400">
+                                                        <i class="fas fa-info-circle"></i>
+                                                        Automated retention incentive approved within policy limits
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- AI-Generated Message (Editable) -->
                                     <div>
                                         <h3 class="font-bold mb-2 flex items-center gap-2">
@@ -2630,7 +2697,7 @@
                                                 <i class="fas fa-info-circle"></i> Edit the message below if needed before sending
                                             </div>
                                             <textarea x-model="escalationMessage" 
-                                                      class="w-full h-40 bg-black/20 text-gray-300 rounded-lg p-3 border border-gray-700 focus:border-primary focus:outline-none resize-none"
+                                                      class="w-full min-h-[320px] bg-black/20 text-gray-300 rounded-lg p-3 border border-gray-700 focus:border-primary focus:outline-none resize-y"
                                                       placeholder="AI-generated message will appear here..."></textarea>
                                         </div>
                                     </div>
@@ -2836,6 +2903,14 @@
                     this.recentInterventions = [];
                     this.recentEvents = [];
                     
+                    // Clear backend session on page load (so all customers start as PENDING)
+                    try {
+                        await fetch('/api/scan/clear-session', { method: 'POST' });
+                        console.log('🧹 Backend session cleared - all customers reset to PENDING');
+                    } catch (error) {
+                        console.log('⚠️ Could not clear backend session (backend may be offline)');
+                    }
+                    
                     // Dashboard ready - no toast needed
                     
                     // Create particles
@@ -2932,16 +3007,23 @@
                         });
 
                         this.socket.on('intervention_complete', (data) => {
-                            console.log('🔔 INTERVENTION COMPLETE EVENT:', data);
+                            console.log('🔔 INTERVENTION COMPLETE EVENT from backend:', data);
                             
+                            // Save to recent interventions
                             this.recentInterventions.unshift(data);
                             if (this.recentInterventions.length > 50) {
                                 this.recentInterventions.pop();
                             }
                             
-                            // Don't show toast here - using simulation instead to avoid duplicates
-                            // Toast is handled by startAgentSequence() function
+                            // 🔥 SAVE REAL BACKEND DATA TO CUSTOMER OBJECT
+                            const customer = this.atRiskCustomers.find(c => c.name === data.customerName);
+                            if (customer) {
+                                customer.processedInfo = data;
+                                customer.aiRecommendation = data.intervention?.action || data.intervention?.recommendation;
+                                console.log(`✅ Saved real backend data for ${data.customerName}:`, customer.processedInfo);
+                            }
                             
+                            // Don't show toast here - handled by startAgentSequence
                             this.addEvent(`Intervention created for ${data.customerName}`, 'success');
                         });
 
@@ -2959,9 +3041,7 @@
                             this.completedAgents = [];  // Reset agent tracking
                             this.currentCustomerProcessing = null;
                             
-                            // Show completion toast
-                            const processedCount = data.processedCount || 3;
-                            this.showToast('success', 'Processing Complete!', `Successfully processed ${processedCount} customers with AI agent responses`);
+                            // No toast here - individual customer toasts already shown
                             
                             this.addEvent('AI scan completed', 'success');
                             console.log('🏁 ALL CUSTOMERS PROCESSED - Scan complete');
@@ -3116,52 +3196,62 @@
                     this.completedAgents = [];
                     this.currentAgent = null;
                     
-                    // Simulate processing 3 customers
+                    // Process 4 customers: 3 auto-send + 1 escalated for human intervention
                     const customers = [
-                        { name: 'Tanya Kumar', churnRisk: 84 },
-                        { name: 'Riya Reddy', churnRisk: 82 },
-                        { name: 'Aditya Bhat', churnRisk: 80 }
+                        { name: 'Tanya Kumar', churnRisk: 84, willEscalate: false },
+                        { name: 'Riya Reddy', churnRisk: 82, willEscalate: false },
+                        { name: 'Aditya Bhat', churnRisk: 80, willEscalate: false },
+                        { name: 'Rahul Malhotra', churnRisk: 77.2, willEscalate: true }  // 4th - escalated
                     ];
                     
-                    console.log('🚀 Starting proactive scan for 3 customers...');
+                    console.log('🚀 Starting proactive scan for 4 customers (3 auto-send + 1 escalated)...');
                     this.addEvent('AI scan started', 'info');
                     
                         // Process each customer with agent sequence
                         let customerIndex = 0;
-                        const processNextCustomer = () => {
+                        const processNextCustomer = async () => {
                             if (customerIndex >= customers.length) {
                                 // All done
                                 setTimeout(() => {
                                     this.scanInProgress = false;
                                     console.log('🏁 All customers processed');
-                                    this.showToast('success', 'Processing Complete!', `Successfully processed ${customers.length} customers with AI agent responses`);
                                 }, 2000);
                                 return;
                             }
                             
                             const customer = customers[customerIndex];
-                            console.log(`🎯 Processing customer ${customerIndex + 1}/3: ${customer.name}`);
+                            console.log(`🎯 Processing customer ${customerIndex + 1}/4: ${customer.name}`);
                             
                             // Update customer status to PROCESSING
                             this.updateCustomerStatus(customer.name, 'processing');
-                            
-                            // Trigger customer started event
                             this.currentCustomerProcessing = customer.name;
                             this.currentCustomer = customer;
                             this.addEvent(`Processing ${customer.name}`, 'high');
                             
-                            // Start agent sequence
-                            this.startAgentSequence(customer.name, () => {
-                                // Callback when customer processing is complete
-                                this.updateCustomerStatus(customer.name, 'sent');
-                            });
+                            // Reset agent tracking
+                            this.completedAgents = [];
+                            this.currentAgent = null;
                             
-                            // Wait for agents to complete (about 12 seconds) then next customer
+                            // Wait for all 4 agents to complete
+                            await this.startAgentSequence(customer.name, () => {
+                                // Callback when agents finish
+                                if (customer.willEscalate) {
+                                    // 4th customer - escalate to human
+                                    this.escalateCustomerToHuman(customer.name);
+                                } else {
+                                    // First 3 - auto-sent
+                                    this.updateCustomerStatus(customer.name, 'sent');
+                                }
+                            }, customer.willEscalate);
+                            
+                            // Small delay then process next customer
                             setTimeout(() => {
                                 customerIndex++;
                                 processNextCustomer();
-                            }, 14000);
-                        };                    // Start processing
+                            }, 1000);
+                        };
+                        
+                    // Start processing first customer
                     setTimeout(() => {
                         processNextCustomer();
                     }, 1000);
@@ -3175,6 +3265,67 @@
                         });
                     } catch (error) {
                         console.log('Backend call failed, using simulation');
+                    }
+                },
+
+                // Escalate Customer to Human (called after agent processing)
+                escalateCustomerToHuman(customerName) {
+                    console.log(`⚠️ Escalating ${customerName} to human intervention`);
+                    
+                    const customer = this.atRiskCustomers.find(c => c.name === customerName);
+                    if (customer) {
+                        // Create AI recommendation and message for Rahul Malhotra (mock backend data)
+                        customer.processedInfo = {
+                            status: 'escalated',
+                            customerName: customerName,
+                            timestamp: new Date().toISOString(),
+                            intervention: {
+                                action: `Engage ${customerName} with personalized communication to address his concerns about product quality and offer a discount on his next electronics purchase. High-value customer (₹2,526 LTV) showing signs of disengagement.`,
+                                recommendation: `Immediate personalized outreach recommended - customer has high LTV and shows quality concerns`,
+                                actionTaken: 'Applied 12.0% discount (₹303) to customer account. Flagged future electronics orders for premium quality checks.',
+                                message: `प्रिय राहुल जी,\n\nदीपावली की हार्दिक शुभकामनाएं! 🪔\n\nमुझे यह जानकर दुख हुआ कि आपको हाल ही में हमारे उत्पाद की गुणवत्ता के साथ कुछ समस्याएं आई हैं। आप हमारे एक मूल्यवान ग्राहक हैं और आपकी संतुष्टि हमारी प्राथमिकता है।\n\nआपकी चिंताओं को स्वीकार करते हुए और आपके धैर्य की सराहना करते हुए, हमने निम्नलिखित कदम उठाए हैं:\n\n✓ आपके खाते में 12% छूट (₹303) लागू की गई है\n✓ आपके भविष्य के इलेक्ट्रॉनिक्स ऑर्डर के लिए प्रीमियम गुणवत्ता जांच सुनिश्चित की जाएगी\n✓ आपके पिछले ऑर्डर की गुणवत्ता समस्याओं की समीक्षा की गई है\n\nहमने यह सुनिश्चित करने के लिए अतिरिक्त उपाय किए हैं कि भविष्य में ऐसी समस्याएं न हों। आपका भरोसा हमारे लिए बहुत महत्वपूर्ण है।\n\nत्योहारी सीजन में विशेष ऑफर के साथ, हमें उम्मीद है कि आप फिर से हमारे साथ खरीदारी करने पर विचार करेंगे। यदि आपके कोई प्रश्न या चिंताएं हैं, तो कृपया बेझिझक संपर्क करें।\n\nआपकी निरंतर सहायता के लिए धन्यवाद।\n\nदीपावली की शुभकामनाएं!\n\nसादर,\nग्राहक सेवा टीम`,
+                                priority: 'high',
+                                escalated: true,
+                                reason: 'Customer showing quality concerns with high churn risk (77.2%). Significant LTV (₹2,526) justifies personal attention to prevent churn.',
+                                channels: ['whatsapp', 'email'],
+                                agents: {
+                                    bodha: {
+                                        sentiment: 'Negative',
+                                        riskAnalysis: 'Customer has quality concerns with recent electronics purchase. Risk of churn due to product dissatisfaction. High LTV customer worth retention effort.',
+                                        contextFactors: ['Quality issues', 'High LTV', '60+ days since last purchase', 'Electronics category']
+                                    },
+                                    dhyana: {
+                                        patterns: 'Customers with quality complaints and 60+ day inactivity have 70% churn probability. Personalized response with quality assurance increases retention by 65%.',
+                                        behavioralInsights: 'Customer prefers electronics category. Festive season provides good re-engagement opportunity.'
+                                    },
+                                    niti: {
+                                        decision: 'ESCALATE to human agent',
+                                        reasoning: 'Quality concerns require personalized attention. Customer LTV justifies human intervention. Automated response may not address specific concerns adequately.',
+                                        priority: 'HIGH',
+                                        recommendedIncentive: '10-12% discount + quality guarantee'
+                                    },
+                                    karuna: {
+                                        tone: 'Warm, apologetic, reassuring',
+                                        empathyLevel: 'High - acknowledge quality issues and provide assurance',
+                                        message: 'Hindi message with Diwali greeting, addressing quality concerns with empathy, offering concrete solutions (discount + quality guarantee), and rebuilding trust.'
+                                    }
+                                }
+                            }
+                        };
+                        
+                        // Update status to escalated
+                        customer.status = 'escalated';
+                        customer.statusText = 'NEEDS INTERVENTION';
+                        customer.statusClass = 'bg-orange-500/20 text-orange-300';
+                        customer.aiRecommendation = customer.processedInfo.intervention.action;
+                        
+                        console.log(`⚠️ ${customerName} escalated - requires human review before sending`);
+                        
+                        // NO TOAST for escalated customers - user will see it in the UI
+                        
+                        // Auto-select this customer to show the intervention details
+                        this.selectedAtRiskCustomer = customer;
+                        this.atRiskMessage = customer.processedInfo.intervention.message;
                     }
                 },
 
@@ -3200,12 +3351,19 @@
 
                 selectEscalation(escalation) {
                     this.selectedEscalation = escalation;
+                    console.log('🔔 Selected escalation:', escalation.customerName);
+                    console.log('📝 Escalation message:', escalation.message);
                     this.loadDraftIfExists(escalation);
-                    console.log('Selected escalation:', escalation);
                 },
 
                 async loadEscalations() {
                     try {
+                        // Clear old drafts to ensure fresh messages load
+                        localStorage.removeItem('escalation_draft_1');
+                        localStorage.removeItem('escalation_draft_2');
+                        
+                        console.log('🗑️ Cleared old escalation drafts - loading fresh AI messages v2');
+                        
                         // Mock escalation data for now - replace with API call
                         this.escalations = [
                             {
@@ -3222,7 +3380,23 @@
                                 slaRemaining: '1h 50m',
                                 status: 'open',
                                 aiRecommendation: 'Immediate phone call. Offer personalized retention package with ₹1,500 discount. Address electronics delivery delays mentioned in support tickets.',
-                                message: 'दीपावली की शुभकामनाएं, राजेश! यह प्रकाश का पर्व आपके जीवन में खुशियाँ लाए...'
+                                actionTaken: 'Applied 15.0% discount (₹1,275) to customer account. Discount code: VIP15DIWALI generated and ready to share.',
+                                message: `दीपावली की शुभकामनाएं, राजेश जी!
+
+यह प्रकाश का पर्व आपके जीवन में नई खुशियाँ और समृद्धि लाए। आप हमारे सबसे मूल्यवान VIP ग्राहकों में से एक हैं, और हम आपके हाल के अनुभव के लिए हार्दिक क्षमा चाहते हैं।
+
+आपकी इलेक्ट्रॉनिक्स डिलीवरी में हुई देरी के बारे में सुनकर हमें बहुत दुख हुआ। हम समझते हैं कि त्योहारी सीजन में यह कितना निराशाजनक है। आपकी वफादारी और धैर्य की सराहना करते हुए, हमने आपके खाते में 15% की विशेष छूट जोड़ी है।
+
+आपका विशेष डिस्काउंट कोड: VIP15DIWALI
+
+इसके अतिरिक्त, हमारी प्रीमियम सपोर्ट टीम आपकी डिलीवरी की समस्या को प्राथमिकता के साथ हल कर रही है। हम अगले 24 घंटों में इसका समाधान सुनिश्चित करेंगे।
+
+क्या हम आपसे व्यक्तिगत रूप से बात करके इस मुद्दे पर चर्चा कर सकते हैं? आपकी सुविधा के अनुसार कॉल का समय बताएं।
+
+दीपावली की हार्दिक शुभकामनाएं! 🪔
+
+सादर,
+आपका समर्पित VIP अकाउंट मैनेजर`
                             },
                             {
                                 id: 2,
@@ -3238,7 +3412,28 @@
                                 slaRemaining: '2h 37m',
                                 status: 'open',
                                 aiRecommendation: 'Acknowledge past issues. Offer quality guarantee and 20% discount on next purchase. Fast-track resolution.',
-                                message: 'Dear Priya, We sincerely apologize for the recent issues you\'ve experienced...'
+                                actionTaken: 'Applied 10.0% discount (₹320) to customer account. Extended return window to 60 days as goodwill gesture.',
+                                message: `Dear Priya,
+
+We sincerely apologize for the recent issues you've experienced with our service. Your feedback is invaluable, and we take your concerns very seriously.
+
+We understand that you've faced repeated quality issues with your recent orders, and this falls far below the standard we strive to maintain. Your satisfaction is our priority, and we're committed to making this right.
+
+To show our commitment to regaining your trust, we've taken the following actions:
+
+✓ Applied a 10% discount (₹320) to your account
+✓ Extended your return window to 60 days as a goodwill gesture
+✓ Flagged your future orders for priority quality checks
+✓ Assigned a dedicated support specialist to your account
+
+We've also reviewed your order history and identified the quality control gaps. Our team has implemented additional checks to prevent similar issues in the future.
+
+We truly value your business and hope to provide you with the exceptional experience you deserve. If you have any immediate concerns or would like to discuss this further, please don't hesitate to reach out directly.
+
+Thank you for your patience and understanding.
+
+Warm regards,
+Customer Success Team`
                             }
                         ];
 
@@ -3371,8 +3566,9 @@
                             this.escalationMessage = draftData.message || escalation.message;
                             this.escalationNotes = draftData.notes || '';
                             
+                            console.log('📄 Loaded draft message from localStorage');
                             // Show info toast
-                            this.showToast('info', 'Draft Loaded', `Loaded saved draft from ${new Date(draftData.timestamp).toLocaleString()}`);
+                            this.showToast('Draft Loaded', 'info', `Loaded saved draft from ${new Date(draftData.timestamp).toLocaleString()}`);
                         } catch (e) {
                             console.error('Failed to load draft:', e);
                         }
@@ -3380,6 +3576,7 @@
                         // No draft, use original AI message
                         this.escalationMessage = escalation.message || '';
                         this.escalationNotes = '';
+                        console.log('✅ Loaded AI-generated message:', this.escalationMessage?.substring(0, 50) + '...');
                     }
                 },
 
@@ -3436,6 +3633,9 @@
                         } else if (newStatus === 'sent') {
                             customer.statusText = 'AUTO-SENT';
                             customer.statusClass = 'bg-green-500/20 text-green-300';
+                        } else if (newStatus === 'escalated') {
+                            customer.statusText = 'NEEDS INTERVENTION';
+                            customer.statusClass = 'bg-orange-500/20 text-orange-300';
                         } else if (newStatus === 'pending') {
                             customer.statusText = 'PENDING';
                             customer.statusClass = 'bg-gray-500/20 text-gray-300';
@@ -3446,52 +3646,67 @@
                 },
 
                 // Start Agent Sequence (simulate proper flow)
-                startAgentSequence(customerName, onComplete = null) {
+                async startAgentSequence(customerName, onComplete = null, willEscalate = false) {
                     const agents = ['bodha', 'dhyana', 'niti', 'karuna'];
-                    let currentIndex = 0;
                     
-                    const processNextAgent = () => {
-                        if (currentIndex >= agents.length) {
-                            // All agents done - show ONE toast per customer
-                            setTimeout(() => {
-                                // Only show toast once per customer
-                                console.log(`🍞 Showing toast for: ${customerName}`);
-                                this.showToast('success', 'Auto-Reply Sent!', `Sent reply to ${customerName}`);
-                                this.currentAgent = null;
-                                this.completedAgents = ['bodha', 'dhyana', 'niti', 'karuna'];
-                                
-                                // Call completion callback to update status
-                                if (onComplete) {
-                                    onComplete();
-                                }
-                            }, 1000);
-                            return;
-                        }
+                    return new Promise((resolve) => {
+                        let currentIndex = 0;
                         
-                        const agentName = agents[currentIndex];
-                        console.log(`🤖 Starting agent: ${agentName}`);
-                        
-                        // Light up current agent
-                        this.currentAgent = agentName;
-                        
-                        // Agent processing time (2-3 seconds for faster demo)
-                        const processingTime = 2000 + Math.random() * 1000;
-                        
-                        setTimeout(() => {
-                            // Mark agent as completed
-                            if (!this.completedAgents.includes(agentName)) {
-                                this.completedAgents.push(agentName);
+                        const processNextAgent = () => {
+                            if (currentIndex >= agents.length) {
+                                // All 4 agents done - now show appropriate toast
+                                setTimeout(() => {
+                                    this.currentAgent = null;
+                                    this.completedAgents = ['bodha', 'dhyana', 'niti', 'karuna'];
+                                    
+                                    // Show different toast based on escalation
+                                    if (willEscalate) {
+                                        console.log(`⚠️ Showing ESCALATION toast for: ${customerName}`);
+                                        this.showToast('warning', 'Human Intervention Needed!', `${customerName} requires human review`);
+                                    } else {
+                                        console.log(`✅ Showing AUTO-SENT toast for: ${customerName}`);
+                                        this.showToast('success', 'Auto-Reply Sent!', `Sent reply to ${customerName}`);
+                                    }
+                                    
+                                    // Clear "Currently Processing" section
+                                    this.currentCustomer = null;
+                                    this.currentCustomerProcessing = null;
+                                    
+                                    // Call completion callback to update status
+                                    if (onComplete) {
+                                        onComplete();
+                                    }
+                                    
+                                    resolve();
+                                }, 1000);
+                                return;
                             }
-                            console.log(`✅ Agent ${agentName} completed`);
                             
-                            // Move to next agent
-                            currentIndex++;
-                            processNextAgent();
-                        }, processingTime);
-                    };
-                    
-                    // Start the sequence
-                    processNextAgent();
+                            const agentName = agents[currentIndex];
+                            console.log(`🤖 Starting agent: ${agentName} for ${customerName}`);
+                            
+                            // Light up current agent
+                            this.currentAgent = agentName;
+                            
+                            // Agent processing time (2-3 seconds for faster demo)
+                            const processingTime = 2000 + Math.random() * 1000;
+                            
+                            setTimeout(() => {
+                                // Mark agent as completed
+                                if (!this.completedAgents.includes(agentName)) {
+                                    this.completedAgents.push(agentName);
+                                }
+                                console.log(`✅ Agent ${agentName} completed (${this.completedAgents.length}/4)`);
+                                
+                                // Move to next agent
+                                currentIndex++;
+                                processNextAgent();
+                            }, processingTime);
+                        };
+                        
+                        // Start the sequence
+                        processNextAgent();
+                    });
                 },
 
                 // Show Toast Notification
@@ -3503,6 +3718,17 @@
                         title = type.charAt(0).toUpperCase() + type.slice(1);
                     }
                     
+                    // 🔥 DEDUPLICATION: Check if same toast already exists
+                    const toastContainer = document.getElementById('toastContainer');
+                    const existingToasts = toastContainer.querySelectorAll('.toast');
+                    for (const toast of existingToasts) {
+                        const bodyText = toast.querySelector('.toast-body')?.textContent;
+                        if (bodyText === message) {
+                            console.log(`⚠️ Duplicate toast prevented: "${message}"`);
+                            return; // Don't show duplicate
+                        }
+                    }
+                    
                     const icons = {
                         success: 'fas fa-check-circle',
                         error: 'fas fa-exclamation-circle',
@@ -3511,11 +3737,10 @@
                     };
                     
                     // Create toast element
-                    const toastContainer = document.getElementById('toastContainer');
                     const toastId = 'toast-' + Date.now();
                     
                     const toastHTML = `
-                        <div class="toast" id="${toastId}">
+                        <div class="toast" id="${toastId}" data-type="${type}">
                             <div class="toast-header">
                                 <i class="${icons[type]} toast-icon"></i>
                                 ${title}
@@ -3526,6 +3751,8 @@
                     
                     toastContainer.insertAdjacentHTML('beforeend', toastHTML);
                     const toastElement = document.getElementById(toastId);
+                    
+                    console.log(`🍞 Toast created: "${message}" (type: ${type})`);
                     
                     // Show toast with animation
                     setTimeout(() => {
@@ -3597,8 +3824,8 @@
                     try {
                         console.log('📋 Loading at-risk customers...');
                         
-                        // Fetch at-risk customers
-                        const response = await fetch('/api/customers/priority-queue');
+                        // Fetch at-risk customers (limit to top 4)
+                        const response = await fetch('/api/customers/priority-queue?limit=4');
                         const data = await response.json();
                         console.log('✅ At-risk customers loaded:', data.length, 'customers');
                         
@@ -3607,10 +3834,30 @@
                         const processedData = await processedResponse.json();
                         console.log('✅ Processed customers loaded:', Object.keys(processedData).length, 'customers');
                         
+                        // Add strategic 4th customer (requires human intervention)
+                        // This matches Rahul Malhotra from backend data - will be processed through agents
+                        if (data.length === 3) {
+                            data.push({
+                                id: 'C100172',
+                                name: 'Rahul Malhotra',
+                                segment: 'Occasional',
+                                category: 'Electronics',
+                                language: 'Hindi',
+                                churnRisk: 77.2,
+                                ltv: 2526.46,
+                                healthScore: 43.0,
+                                priority: 'high',
+                                riskColor: '#f59e0b',
+                                escalated: false
+                            });
+                            console.log('✅ Added Rahul Malhotra for human intervention demo');
+                        }
+                        
                         // Enrich customers with processing status
-                        this.atRiskCustomers = data.map(customer => {
+                        // First 3 will be auto-sent, 4th will be escalated for human intervention
+                        this.atRiskCustomers = data.map((customer, index) => {
                             const processedInfo = processedData[customer.id];
-                            let status = 'pending';  // Default to pending
+                            let status = 'pending';  // Default to pending initially
                             let statusText = 'PENDING';
                             let statusClass = 'bg-gray-500/20 text-gray-300';
                             
@@ -3637,12 +3884,13 @@
                                 statusText: statusText,
                                 statusClass: statusClass,
                                 interventionSent: status === 'sent',
-                                humanInterventionSent: false,  // Track if human has sent intervention
-                                processedInfo: processedInfo
+                                humanInterventionSent: false,
+                                processedInfo: processedInfo,
+                                aiRecommendation: processedInfo?.intervention?.recommendation || null
                             };
                         });
                         
-                        console.log(`✅ Loaded ${this.atRiskCustomers.length} at-risk customers (100% REAL from Excel)`);
+                        console.log(`✅ Loaded ${this.atRiskCustomers.length} at-risk customers (3 from backend + 1 strategic VIP)`);
                     } catch (error) {
                         console.error('❌ Failed to load at-risk customers:', error);
                     }
@@ -3655,14 +3903,21 @@
                 selectAtRiskCustomer(customer) {
                     this.selectedAtRiskCustomer = customer;
                     
-                    // If customer already processed, show agent journey modal
-                    if (customer.status === 'sent' || customer.status === 'escalated') {
-                        this.viewAgentJourney(customer);
-                    } else {
-                        // Generate personalized message using AI
-                        this.atRiskMessage = this.generateInterventionMessage(customer);
-                        this.atRiskNotes = '';
+                    // Debug: Log customer data to see what we have
+                    console.log('📋 Selected customer:', customer.name);
+                    console.log('📊 Customer data:', customer);
+                    console.log('🤖 AI Recommendation:', customer.processedInfo?.intervention?.recommendation || customer.aiRecommendation);
+                    console.log('💬 Message:', customer.processedInfo?.intervention?.message);
+                    
+                    // Load intervention message from backend data
+                    if (customer.processedInfo?.intervention?.message) {
+                        this.atRiskMessage = customer.processedInfo.intervention.message;
+                    } else if (customer.status === 'pending') {
+                        // Clear message for pending customers
+                        this.atRiskMessage = '';
                     }
+                    
+                    this.atRiskNotes = '';
                     
                     console.log('Selected at-risk customer:', customer);
                 },
@@ -3735,14 +3990,22 @@ Your ProCX Team 💙`;
                     
                     const customerName = this.selectedAtRiskCustomer.name;
                     
-                    // Mark as human intervention sent
+                    // Save the message before changing status
+                    this.selectedAtRiskCustomer.humanMessage = this.atRiskMessage;
+                    this.selectedAtRiskCustomer.humanNotes = this.atRiskNotes;
+                    
+                    // Change status from 'escalated' to 'sent' (human sent the intervention)
+                    this.selectedAtRiskCustomer.status = 'sent';
+                    this.selectedAtRiskCustomer.statusText = 'AUTO-SENT';  // Keep consistent with auto-sent
+                    this.selectedAtRiskCustomer.statusClass = 'bg-green-500/20 text-green-300';
                     this.selectedAtRiskCustomer.humanInterventionSent = true;
                     this.selectedAtRiskCustomer.interventionSent = true;
                     this.selectedAtRiskCustomer.interventionDate = new Date().toISOString();
-                    this.selectedAtRiskCustomer.statusText = 'INTERVENTION SENT';
-                    this.selectedAtRiskCustomer.statusClass = 'bg-blue-500/20 text-blue-300';
-                    this.selectedAtRiskCustomer.humanMessage = this.atRiskMessage;
-                    this.selectedAtRiskCustomer.humanNotes = this.atRiskNotes;
+                    
+                    // Update the processedInfo to mark as sent
+                    if (this.selectedAtRiskCustomer.processedInfo) {
+                        this.selectedAtRiskCustomer.processedInfo.status = 'sent';
+                    }
                     
                     // Show success toast
                     this.showToast('success', 'Intervention Sent!', `Proactive message sent to ${customerName}. Monitoring their response.`);
@@ -3755,10 +4018,8 @@ Your ProCX Team 💙`;
                     console.log('Message:', this.atRiskMessage);
                     console.log('Notes:', this.atRiskNotes);
                     
-                    // Keep selection to show info (don't clear)
-                    // Clear message fields but keep customer selected to show sent info
-                    this.atRiskMessage = '';
-                    this.atRiskNotes = '';
+                    // DON'T clear the message - keep it visible as read-only (status 'sent' will show uneditable view)
+                    // The UI will automatically switch to the "sent" view which shows the message in a scrollable div
                 },
 
                 // Schedule Intervention (Simple Snooze)

@@ -1,201 +1,203 @@
 """
-Demo: Escalation Scenario - VIP Customer with Critical Churn Risk
-Shows when ProCX escalates to human intervention
+VIP ESCALATION DEMO - ProCX Platform
+=====================================
+Demonstrates AI-driven escalation decision making for high-value customers.
 """
+
+import os
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import ProCX
-from models import Customer, CustomerEvent, EventType
+from models.customer import CustomerEvent, Customer, EventType
 
 
-def dramatic_print(text: str, delay: float = 0.5):
-    """Print with dramatic delay for demo effect."""
-    print(text)
-    time.sleep(delay)
+def safe_print(text):
+    """Print text safely, handling Unicode characters"""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Fallback: encode to ASCII with replacement
+        print(text.encode('ascii', errors='replace').decode('ascii'))
 
 
-def simulate_vip_escalation():
-    """Simulate a VIP customer scenario that triggers human escalation."""
+def dramatic_pause(seconds=1.5):
+    """Add dramatic pause for presentation"""
+    time.sleep(seconds)
+
+
+def print_section_header(title):
+    """Print fancy section header"""
+    safe_print(f"\n{'='*80}")
+    safe_print(f"  {title}")
+    safe_print(f"{'='*80}\n")
+
+
+def cleanup_demo_data():
+    """Clean up demo customer data for fresh run"""
+    demo_customer_id = "VIP999999"
     
-    print("\n" + "="*70)
-    print("🚨 ESCALATION SCENARIO DEMO: VIP Customer Crisis")
-    print("="*70)
-    print("   Demonstrating when ProCX escalates to human agents")
-    print("="*70 + "\n")
+    # Remove memory files
+    memory_file = Path(f"data/memory/{demo_customer_id}.jsonl")
+    if memory_file.exists():
+        memory_file.unlink()
     
-    dramatic_print("📋 SCENARIO: VIP customer shows multiple risk signals", 0.8)
-    dramatic_print("   • Multiple support tickets with low satisfaction", 0.5)
-    dramatic_print("   • Declining engagement over 60 days", 0.5)
-    dramatic_print("   • High lifetime value at risk (₹8,500)", 0.5)
-    dramatic_print("   • Platinum tier member", 0.5)
+    # Remove escalation files
+    escalation_dir = Path("data/escalations")
+    if escalation_dir.exists():
+        for file in escalation_dir.glob(f"{demo_customer_id}_*.jsonl"):
+            file.unlink()
+        for file in escalation_dir.glob("active_escalations.jsonl"):
+            file.unlink()
+
+    dramatic_pause(0.5)
+
+
+def run_escalation_demo():
+    """VIP customer escalation scenario demonstration"""
     
-    dramatic_print("\n⚙️  Initializing ProCX Platform...", 0.8)
+    # Clean up any previous demo data
+    cleanup_demo_data()
     
-    # Initialize ProCX
-    procx = ProCX()
+    print_section_header("VIP CUSTOMER CRISIS DETECTED")
     
-    # Create VIP customer with escalation triggers
-    customer = Customer(
-        customer_id="C100567",
-        first_name="Rajesh",
-        last_name="Malhotra",
-        email="rajesh.malhotra@example.com",
+    safe_print("SCENARIO:")
+    safe_print("   High-value VIP customer showing critical churn signals")
+    safe_print("   Multiple support tickets, declining engagement, payment issues")
+    safe_print("   Will AI escalate to human agent or handle automatically?")
+    safe_print("")
+    
+    dramatic_pause(2)
+    
+    # Initialize platform (same as main.py)
+    platform = ProCX()
+    
+    # Create VIP crisis scenario
+    safe_print("\n Creating VIP customer profile...")
+    dramatic_pause()
+    
+    vip_customer = Customer(
+        customer_id="VIP999999",
+        first_name="Priya",
+        last_name="Kapoor",
+        email="priya.kapoor@example.com",
         segment="VIP",
-        lifetime_value=8500.0,  # High value (> $5000)
+        lifetime_value=25000.0,
         preferred_category="Electronics",
         loyalty_tier="Platinum",
-        language="hi",  # Hindi
-        phone="+91-9988776655",
-        country="India"
+        phone="+91-98765-43210",
+        signup_date=(datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d"),
+        country="India",
+        avg_order_value=166.67,
+        last_active_date=(datetime.now() - timedelta(days=45)).strftime("%Y-%m-%d"),
+        opt_in_marketing=True,
+        language="en"
     )
     
-    dramatic_print(f"\n👤 TARGET CUSTOMER:", 0.6)
-    dramatic_print(f"   Name: {customer.full_name}", 0.3)
-    dramatic_print(f"   Customer ID: {customer.customer_id}", 0.3)
-    dramatic_print(f"   Segment: {customer.segment} (VIP Status)", 0.3)
-    dramatic_print(f"   Lifetime Value: ₹{customer.lifetime_value:,.0f}", 0.3)
-    dramatic_print(f"   Loyalty Tier: {customer.loyalty_tier}", 0.3)
-    dramatic_print(f"   Language: Hindi", 0.3)
+    safe_print(" VIP Customer Created:")
+    safe_print(f"   Name: {vip_customer.full_name}")
+    safe_print(f"   Segment: {vip_customer.segment} | Tier: {vip_customer.loyalty_tier}")
+    safe_print(f"   Lifetime Value: ${vip_customer.lifetime_value:,.2f}")
+    safe_print(f"    Red Flags: VIP with 45 days inactivity, high churn risk expected")
     
-    # Create event with HIGH churn risk metadata
+    dramatic_pause(2)
+    
+    # Create event (same as main.py)
+    safe_print("\n Creating crisis event...")
     event = CustomerEvent(
-        event_id=f"ESCALATION_DEMO_{customer.customer_id}_{int(time.time())}",
-        customer=customer,
+        event_id="VIP_CRISIS_001",
+        customer=vip_customer,
         event_type=EventType.PROACTIVE_RETENTION,
         timestamp=datetime.now(),
-        description="VIP customer with critical churn risk - multiple negative signals",
+        description="VIP customer with critical churn signals - multiple touchpoints required",
         metadata={
-            'churn_risk': 0.88,  # 88% churn risk
-            'predicted_churn_risk': 0.88,
-            'health_score': 0.12,
-            'risk_level': 'critical',
-            'trigger_reason': 'vip_critical_risk',
-            'support_tickets': 5,
-            'avg_csat': 2.1,  # Low satisfaction
-            'days_since_activity': 45,
-            'declining_engagement': True
+            "priority": "critical",
+            "trigger": "Multiple critical signals",
+            "demo_scenario": "VIP_escalation"
         }
     )
     
-    dramatic_print("\n🔍 RISK ANALYSIS:", 0.6)
-    dramatic_print("   • Churn Risk: 88% (CRITICAL)", 0.4)
-    dramatic_print("   • Health Score: 12% (VERY LOW)", 0.4)
-    dramatic_print("   • Recent Support Tickets: 5 (Avg CSAT: 2.1/5.0)", 0.4)
-    dramatic_print("   • Days Since Last Activity: 45 days", 0.4)
+    safe_print(f" Event: {event.event_type.value.upper()}")
+    safe_print(f"   Priority: CRITICAL")
     
-    dramatic_print("\n🧠 Processing through 4-agent workflow...", 0.8)
+    dramatic_pause(2)
     
-    # Process through agents
-    start_time = time.time()
-    result = procx.process_proactive_event(event, verbose=False)
-    elapsed = time.time() - start_time
+    print_section_header(" AI AGENTS ANALYZING SITUATION...")
     
-    dramatic_print(f"✅ Analysis complete in {elapsed:.1f} seconds\n", 0.8)
+    safe_print("Running through 4-agent workflow:")
+    safe_print("   1⃣ Bodha (Context Agent) - Gathering customer history")
+    safe_print("   2⃣ Dhyana (Pattern Agent) - Analyzing behavioral patterns")
+    safe_print("   3⃣ Niti (Decision Agent) - Making strategic decision")
+    safe_print("   4⃣ Karuna (Empathy Agent) - Crafting personalized response")
     
-    # Display results
-    print("="*70)
-    print("📊 DECISION: ESCALATION ANALYSIS")
-    print("="*70)
+    dramatic_pause(2)
     
-    print(f"\n🎯 Recommended Action:")
-    print(f"   {result.recommended_action}")
+    # Process event (SAME WORKFLOW AS MAIN.PY!)
+    safe_print("\n Processing...")
+    result = platform.process_proactive_event(event, verbose=True)
     
-    print(f"\n📈 Risk Assessment:")
-    print(f"   • Customer Segment: VIP (triggers escalation rule)")
-    print(f"   • Lifetime Value: ₹8,500 (> ₹5,000 threshold)")
-    print(f"   • Churn Risk: 88% (> 80% VIP threshold)")
-    print(f"   • Sentiment: {result.sentiment.value if result.sentiment else 'N/A'}")
-    print(f"   • Urgency Level: {result.urgency_level}/5")
-    print(f"   • Priority: {result.priority_level or 'CRITICAL'}")
+    dramatic_pause(1)
     
-    # Check escalation rules manually (since agent might not set it correctly)
-    escalation_triggered = False
-    escalation_reasons = []
+    print_section_header(" AI DECISION RESULTS")
     
-    # Rule 1: VIP with risk > 80%
-    if customer.segment == "VIP" and event.metadata.get('churn_risk', 0) >= 0.8:
-        escalation_triggered = True
-        escalation_reasons.append("VIP customer with churn risk > 80%")
+    if result.predicted_churn_risk:
+        safe_print(f"Churn Risk: {result.predicted_churn_risk:.1%}")
+    safe_print(f"Priority Level: {result.priority_level.upper() if result.priority_level else 'CRITICAL'}")
     
-    # Rule 2: High LTV (>$5000) with risk > 85%
-    if customer.lifetime_value > 5000 and event.metadata.get('churn_risk', 0) >= 0.85:
-        escalation_triggered = True
-        escalation_reasons.append(f"High-value customer (₹{customer.lifetime_value:,.0f}) with critical risk")
+    dramatic_pause()
     
-    # Rule 3: Low CSAT history
-    if event.metadata.get('avg_csat', 5.0) < 2.5:
-        escalation_triggered = True
-        escalation_reasons.append("Poor customer satisfaction history (CSAT < 2.5)")
+    # Show what agent DID (not just recommended)
+    if result.action_taken:
+        print(f"\n Action Taken by AI:")
+        print(f"   {result.action_taken}")
     
-    print(f"\n🚨 ESCALATION DECISION:")
-    if escalation_triggered:
-        print("   ╔════════════════════════════════════════════════════╗")
-        print("   ║  STATUS: ESCALATED TO HUMAN AGENT                 ║")
-        print("   ╚════════════════════════════════════════════════════╝")
-        print(f"\n   Escalation Triggers ({len(escalation_reasons)} rules matched):")
-        for idx, reason in enumerate(escalation_reasons, 1):
-            print(f"   {idx}. {reason}")
+    if result.discount_applied:
+        print(f"\n Incentive Decision:")
+        if result.discount_auto_approved:
+            print(f"    EXECUTED: {result.discount_applied}% discount applied")
+            print(f"   (Auto-approved within 10% threshold)")
+        else:
+            print(f"    PENDING: {result.discount_applied}% discount queued for approval")
+            print(f"   (Exceeds 10% auto-approval limit)")
+    
+    dramatic_pause(1.5)
+    
+    # Show escalation decision
+    if result.escalation_needed:
+        print_section_header(" ESCALATED TO HUMAN AGENT")
+        print("AI determined this situation requires human judgment.")
+        print(f"\n Context for Human Agent:")
+        print(f"   Priority: {result.priority_level.upper()}")
+        print(f"   Recommended Action: {result.recommended_action}")
+        print(f"   Churn Risk: {result.predicted_churn_risk:.1%}")
         
-        print(f"\n   Next Steps:")
-        print(f"   • Assign to senior account manager")
-        print(f"   • Direct phone call within 2 hours")
-        print(f"   • Personalized retention package prepared")
-        print(f"   • Executive review required")
+        if result.discount_applied and not result.discount_auto_approved:
+            print(f"\n Pending Approval:")
+            print(f"   AI recommends: {result.discount_applied}% discount")
+            print(f"   Requires human approval (>10% threshold)")
+        
+        print(f"\n Draft Message Prepared:")
+        safe_print(f"   {result.personalized_response[:150]}...")
+        
+        print("\n Human agent can review and execute with one click!")
+        
     else:
-        print("   STATUS: Automated intervention (No escalation)")
+        print_section_header(" AUTOMATED INTERVENTION COMPLETE")
+        print("AI successfully handled the situation without escalation.")
+        print(f"\n Action Executed: {result.action_taken}")
+        print(f"\n Message Sent:")
+        if result.personalized_response:
+            safe_print(f"   {result.personalized_response[:150]}...")
+        else:
+            safe_print("   (Message generation in progress)")
     
-    print(f"\n💬 Pre-drafted Message (Hindi):")
-    print("="*70)
-    if result.personalized_response:
-        message_preview = result.personalized_response[:500]
-        print(message_preview)
-        if len(result.personalized_response) > 500:
-            print("...")
-    else:
-        print("Message generation in progress...")
-    print("="*70)
-    
-    print("\n📋 COMPARISON:")
-    print("-"*70)
-    print("❌ WITHOUT ESCALATION:")
-    print("   • Automated email sent")
-    print("   • Generic retention offer")
-    print("   • Customer might ignore → Churns")
-    print("")
-    print("✅ WITH ESCALATION:")
-    print("   • Human agent assigned immediately")
-    print("   • Personal phone call within 2 hours")
-    print("   • Custom retention package (₹8,500 LTV worth saving)")
-    print("   • Executive attention to VIP customer")
-    print("-"*70)
-    
-    print("\n" + "="*70)
-    print("🎯 KEY INSIGHT: Smart Escalation Rules")
-    print("="*70)
-    print("ProCX automatically escalates when:")
-    print("  1. VIP customers show churn risk > 80%")
-    print("  2. High-value customers (LTV > ₹5,000) at critical risk (> 85%)")
-    print("  3. Customers with poor satisfaction history (CSAT < 2.5)")
-    print("")
-    print("This ensures:")
-    print("  • High-value customers get human attention")
-    print("  • Complex cases handled by experienced agents")
-    print("  • Automated system for routine cases")
-    print("  • Best use of human resources")
-    print("="*70 + "\n")
+    print("\n" + "="*70 + "\n")
 
 
 if __name__ == "__main__":
-    try:
-        simulate_vip_escalation()
-    except KeyboardInterrupt:
-        print("\n\nDemo interrupted by user.")
-    except Exception as e:
-        print(f"\n\nError: {e}")
-        import traceback
-        traceback.print_exc()
+    run_escalation_demo()

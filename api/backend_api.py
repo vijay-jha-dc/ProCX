@@ -43,7 +43,7 @@ print("✅ ProCX Backend ready")
 
 @app.route('/')
 def index():
-    return send_from_directory('..', 'dashboard_enhanced.html')
+    return send_from_directory('..', 'dashboard.html')
 
 @app.route('/health')
 def health_check():
@@ -297,6 +297,19 @@ def process_single_customer(customer_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+
+@app.route('/api/scan/clear-session', methods=['POST'])
+def clear_session():
+    """Clear all session data (processed customers, interventions, events)"""
+    try:
+        clear_session_history()
+        return jsonify({
+            'status': 'success',
+            'message': 'Session cleared - all customers reset to PENDING'
+        })
+    except Exception as e:
+        print(f"Error clearing session: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/scan/proactive', methods=['POST'])
 def trigger_proactive_scan():

@@ -1,902 +1,1007 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ProCX - Real-Time AI Event Processing Demo</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
     <style>
-        [x-cloak] { display: none !important; }
-        
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+      [x-cloak] {
+        display: none !important;
+      }
+
+      @keyframes gradientShift {
+        0%,
+        100% {
+          background-position: 0% 50%;
         }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+        50% {
+          background-position: 100% 50%;
         }
-        
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
-            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8), 0 0 60px rgba(139, 92, 246, 0.6); }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        50% {
+          transform: translateY(-20px);
         }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0a0a0f;
-            color: #e5e7eb;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
         }
-        
-        /* Modern Subtle Background */
-        .bg-animated {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: linear-gradient(180deg, #0a0a0f 0%, #0f0f1a 50%, #0a0a0f 100%);
+        50% {
+          box-shadow: 0 0 40px rgba(99, 102, 241, 0.8),
+            0 0 60px rgba(139, 92, 246, 0.6);
         }
-        
-        .bg-animated::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 0% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
-            opacity: 0.6;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: #0a0a0f;
+        color: #e5e7eb;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Modern Subtle Background */
+      .bg-animated {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: linear-gradient(
+          180deg,
+          #0a0a0f 0%,
+          #0f0f1a 50%,
+          #0a0a0f 100%
+        );
+      }
+
+      .bg-animated::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+            ellipse at 50% 0%,
+            rgba(99, 102, 241, 0.08) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse at 0% 50%,
+            rgba(139, 92, 246, 0.05) 0%,
+            transparent 50%
+          );
+        opacity: 0.6;
+      }
+
+      .bg-animated::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(
+            rgba(255, 255, 255, 0.02) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 100px 100px;
+        opacity: 0.3;
+      }
+
+      .glass-card {
+        background: rgba(17, 17, 27, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .glass-card:hover {
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+
+      .event-card {
+        animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-30px);
         }
-        
-        .bg-animated::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100px 100px;
-            opacity: 0.3;
+        to {
+          opacity: 1;
+          transform: translateX(0);
         }
-        
-        .glass-card {
-            background: rgba(17, 17, 27, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .pulse-ring {
+        animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      @keyframes pulseRing {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
         }
-        
-        .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        50% {
+          transform: scale(1.1);
+          opacity: 0.5;
         }
-        
-        .event-card {
-            animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .gradient-text {
+        background: linear-gradient(
+          120deg,
+          #818cf8 0%,
+          #c084fc 50%,
+          #818cf8 100%
+        );
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+      }
+
+      .scenario-card {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .scenario-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .scenario-card:hover::before {
+        left: 100%;
+      }
+
+      .scenario-card.active {
+        transform: scale(1.05);
+        border-width: 2px;
+      }
+
+      .timeline-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        position: absolute;
+        left: 13px;
+      }
+
+      .timeline-line {
+        position: relative;
+        padding-left: 40px;
+      }
+
+      .timeline-line::before {
+        content: "";
+        position: absolute;
+        left: 18px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(
+          180deg,
+          rgba(99, 102, 241, 0.8),
+          rgba(99, 102, 241, 0.2)
+        );
+      }
+
+      .stat-badge {
+        background: rgba(17, 17, 27, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        font-size: 13px;
+        transition: all 0.2s ease;
+      }
+
+      .stat-badge:hover {
+        background: rgba(17, 17, 27, 0.95);
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      .glow-effect {
+        box-shadow: 0 0 20px rgba(129, 140, 248, 0.15);
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 15px rgba(129, 140, 248, 0.15);
         }
-        
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        50% {
+          box-shadow: 0 0 25px rgba(129, 140, 248, 0.25);
         }
-        
-        .pulse-ring {
-            animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      /* Toast Notifications */
+      .toast-container {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .toast {
+        background: linear-gradient(
+          135deg,
+          rgba(26, 26, 46, 0.98) 0%,
+          rgba(20, 20, 40, 0.95) 100%
+        );
+        backdrop-filter: blur(30px) saturate(180%);
+        border: 1.5px solid rgba(99, 102, 241, 0.4);
+        border-radius: 20px;
+        padding: 16px 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8),
+          0 0 20px rgba(99, 102, 241, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        min-width: 320px;
+        max-width: 420px;
+        animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.3s ease;
+      }
+
+      .toast:hover {
+        transform: translateX(-4px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9),
+          0 0 30px rgba(99, 102, 241, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(100px);
         }
-        
-        @keyframes pulseRing {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.1);
-                opacity: 0.5;
-            }
+        to {
+          opacity: 1;
+          transform: translateX(0);
         }
-        
-        .gradient-text {
-            background: linear-gradient(120deg, #818cf8 0%, #c084fc 50%, #818cf8 100%);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
+      }
+
+      .toast.fade-out {
+        animation: slideOutRight 0.3s ease-out forwards;
+      }
+
+      @keyframes slideOutRight {
+        to {
+          opacity: 0;
+          transform: translateX(100px);
         }
-        
-        .scenario-card {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .scenario-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s;
-        }
-        
-        .scenario-card:hover::before {
-            left: 100%;
-        }
-        
-        .scenario-card.active {
-            transform: scale(1.05);
-            border-width: 2px;
-        }
-        
-        .timeline-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            position: absolute;
-            left: 13px;
-        }
-        
-        .timeline-line {
-            position: relative;
-            padding-left: 40px;
-        }
-        
-        .timeline-line::before {
-            content: '';
-            position: absolute;
-            left: 18px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(180deg, rgba(99, 102, 241, 0.8), rgba(99, 102, 241, 0.2));
-        }
-        
-        .stat-badge {
-            background: rgba(17, 17, 27, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 8px 16px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-            font-size: 13px;
-            transition: all 0.2s ease;
-        }
-        
-        .stat-badge:hover {
-            background: rgba(17, 17, 27, 0.95);
-            border-color: rgba(255, 255, 255, 0.15);
-        }
-        
-        .glow-effect {
-            box-shadow: 0 0 20px rgba(129, 140, 248, 0.15);
-        }
-        
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(129, 140, 248, 0.15); }
-            50% { box-shadow: 0 0 25px rgba(129, 140, 248, 0.25); }
-        }
-        
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .toast {
-            background: linear-gradient(135deg, 
-                rgba(26, 26, 46, 0.98) 0%, 
-                rgba(20, 20, 40, 0.95) 100%
-            );
-            backdrop-filter: blur(30px) saturate(180%);
-            border: 1.5px solid rgba(99, 102, 241, 0.4);
-            border-radius: 20px;
-            padding: 16px 20px;
-            box-shadow: 
-                0 20px 40px rgba(0, 0, 0, 0.8),
-                0 0 20px rgba(99, 102, 241, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            min-width: 320px;
-            max-width: 420px;
-            animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            transition: all 0.3s ease;
-        }
-        
-        .toast:hover {
-            transform: translateX(-4px);
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.9),
-                0 0 30px rgba(99, 102, 241, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        }
-        
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .toast.fade-out {
-            animation: slideOutRight 0.3s ease-out forwards;
-        }
-        
-        @keyframes slideOutRight {
-            to {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(26, 26, 46, 0.5);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.5);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.7);
-        }
-        
-        .info-card {
-            background: rgba(17, 17, 27, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            transition: all 0.2s ease;
-        }
-        
-        .info-card:hover {
-            background: rgba(17, 17, 27, 0.7);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .agent-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(26, 26, 46, 0.5);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.5);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.7);
+      }
+
+      .info-card {
+        background: rgba(17, 17, 27, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        transition: all 0.2s ease;
+      }
+
+      .info-card:hover {
+        background: rgba(17, 17, 27, 0.7);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .agent-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
     </style>
-</head>
-<body x-data="realtimeShowcase()" x-init="init()">
-    
+  </head>
+  <body x-data="realtimeShowcase()" x-init="init()">
     <div class="bg-animated"></div>
-    
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
-    
+
     <div class="container mx-auto px-8 py-12 max-w-[1600px]">
-        
-        <!-- Modern Hero Section -->
-        <div class="mb-16">
-            <div class="flex items-start justify-between mb-12">
-                <!-- Title Side -->
-                <div class="flex-1">
-                    <div class="inline-block mb-3">
-                        <span class="text-sm font-medium text-indigo-400 tracking-wide uppercase">ProCX Platform</span>
-                    </div>
-                    <h1 class="text-5xl font-bold mb-4 tracking-tight" style="line-height: 1.1;">
-                        Real-Time AI Event<br/>
-                        <span class="gradient-text">Processing System</span>
-                    </h1>
-                    <p class="text-lg text-gray-400 max-w-2xl leading-relaxed">
-                        Multi-agent AI system processing critical customer events with personalized interventions in real-time
-                    </p>
-                </div>
-                
-                <!-- Status Side -->
-                <div class="flex flex-col items-end gap-3">
-                    <div class="stat-badge" :class="demoRunning ? 'border-emerald-500/30' : 'border-indigo-500/30'">
-                        <div class="relative">
-                            <div class="w-2 h-2 rounded-full" :class="demoRunning ? 'bg-emerald-400' : 'bg-indigo-400'"></div>
-                            <div class="absolute inset-0 w-2 h-2 rounded-full" :class="demoRunning ? 'bg-emerald-400 pulse-ring' : ''"></div>
-                        </div>
-                        <span class="font-semibold" :class="demoRunning ? 'text-emerald-400' : 'text-indigo-400'" 
-                              x-text="demoRunning ? 'Live Processing' : 'Ready'"></span>
-                    </div>
-                    
-                    <div class="stat-badge">
-                        <i class="fas fa-layer-group text-indigo-400 text-sm"></i>
-                        <span class="text-gray-300">Events</span>
-                        <span class="font-bold text-white" x-text="events.length"></span>
-                    </div>
-                </div>
+      <!-- Modern Hero Section -->
+      <div class="mb-16">
+        <div class="flex items-start justify-between mb-12">
+          <!-- Title Side -->
+          <div class="flex-1">
+            <div class="inline-block mb-3">
+              <span
+                class="text-sm font-medium text-indigo-400 tracking-wide uppercase"
+                >ProCX Platform</span
+              >
             </div>
-            
-            <!-- Key Metrics - Clean Cards -->
-            <div class="grid grid-cols-3 gap-6">
-                <div class="glass-card p-6">
-                    <div class="text-sm text-gray-400 mb-2 font-medium">Total Interventions</div>
-                    <div class="text-4xl font-bold gradient-text" x-text="events.filter(e => e.type === 'intervention_ready').length || '0'"></div>
-                </div>
-                <div class="glass-card p-6">
-                    <div class="text-sm text-gray-400 mb-2 font-medium">AI Agents Active</div>
-                    <div class="text-4xl font-bold gradient-text">4</div>
-                </div>
-                <div class="glass-card p-6">
-                    <div class="text-sm text-gray-400 mb-2 font-medium">Customer LTV</div>
-                    <div class="text-4xl font-bold gradient-text" x-text="customerInfo ? '$' + customerInfo.ltv : '$—'"></div>
-                </div>
+            <h1
+              class="text-5xl font-bold mb-4 tracking-tight"
+              style="line-height: 1.1"
+            >
+              Real-Time AI Event<br />
+              <span class="gradient-text">Processing System</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-2xl leading-relaxed">
+              Multi-agent AI system processing critical customer events with
+              personalized interventions in real-time
+            </p>
+          </div>
+
+          <!-- Status Side -->
+          <div class="flex flex-col items-end gap-3">
+            <!-- Start Demo Button -->
+            <button
+              @click="startDemo()"
+              :disabled="demoRunning"
+              class="px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200"
+              :class="demoRunning 
+                                ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 shadow-lg hover:shadow-xl'"
+            >
+              <i
+                :class="demoRunning ? 'fas fa-spinner fa-spin' : 'fas fa-play'"
+                class="mr-2"
+              ></i>
+              <span
+                x-text="demoRunning ? 'Processing...' : 'Start Demo'"
+              ></span>
+            </button>
+
+            <div
+              class="stat-badge"
+              :class="demoRunning ? 'border-emerald-500/30' : 'border-indigo-500/30'"
+            >
+              <div class="relative">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  :class="demoRunning ? 'bg-emerald-400' : 'bg-indigo-400'"
+                ></div>
+                <div
+                  class="absolute inset-0 w-2 h-2 rounded-full"
+                  :class="demoRunning ? 'bg-emerald-400 pulse-ring' : ''"
+                ></div>
+              </div>
+              <span
+                class="font-semibold"
+                :class="demoRunning ? 'text-emerald-400' : 'text-indigo-400'"
+                x-text="demoRunning ? 'Live Processing' : 'Ready'"
+              ></span>
             </div>
+
+            <div class="stat-badge">
+              <i class="fas fa-layer-group text-indigo-400 text-sm"></i>
+              <span class="text-gray-300">Events</span>
+              <span class="font-bold text-white" x-text="events.length"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Scenario - Minimalist Design -->
+      <div class="glass-card p-8 mb-12 border-l-4 border-l-indigo-500">
+        <div class="flex items-center gap-6">
+          <div
+            class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30"
+          >
+            <i class="fas fa-credit-card text-2xl text-indigo-400"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <h3 class="text-xl font-semibold text-white">
+                Payment Failure Detection
+              </h3>
+              <span
+                class="text-xs px-2 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+              >
+                Active Scenario
+              </span>
+            </div>
+            <p class="text-sm text-gray-400 mb-4">
+              Real-time event from payment gateway • VIP customer payment
+              declined
+            </p>
+            <div class="grid grid-cols-4 gap-4 text-sm">
+              <div>
+                <span class="text-gray-500">Customer</span>
+                <div class="text-white font-medium">Tanya Kumar</div>
+              </div>
+              <div>
+                <span class="text-gray-500">Tier</span>
+                <div class="text-amber-400 font-medium">VIP Platinum</div>
+              </div>
+              <div>
+                <span class="text-gray-500">LTV</span>
+                <div class="text-emerald-400 font-medium">$15,000</div>
+              </div>
+              <div>
+                <span class="text-gray-500">Issue</span>
+                <div class="text-red-400 font-medium">Card Expired</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Grid - Modern 2-Column Layout -->
+      <div class="grid grid-cols-12 gap-8">
+        <!-- LEFT COLUMN: Customer + AI Agents -->
+        <div class="col-span-5 space-y-6">
+          <!-- Customer Information Card -->
+          <div x-show="customerInfo" class="glass-card p-8">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-4">
+              Customer Profile
+            </div>
+            <div class="flex items-start gap-6 mb-6">
+              <div
+                class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30"
+              >
+                <i class="fas fa-user text-2xl text-indigo-400"></i>
+              </div>
+              <div class="flex-1">
+                <h3
+                  class="text-2xl font-bold text-white mb-1"
+                  x-text="customerInfo?.customerName || 'Loading...'"
+                ></h3>
+                <p
+                  class="text-sm text-gray-400"
+                  x-text="customerInfo?.segment + ' Customer'"
+                ></p>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-gray-500 mb-1">LTV</div>
+                <div class="text-2xl font-bold text-emerald-400">
+                  $<span x-text="customerInfo?.ltv || '—'"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+              <div class="info-card">
+                <div class="text-xs text-gray-500 mb-1">ID</div>
+                <div class="font-mono text-sm font-semibold text-white">
+                  C100924
+                </div>
+              </div>
+              <div class="info-card">
+                <div class="text-xs text-gray-500 mb-1">Tier</div>
+                <div class="font-semibold text-amber-400">Platinum</div>
+              </div>
+              <div class="info-card">
+                <div class="text-xs text-gray-500 mb-1">Status</div>
+                <div class="font-semibold text-red-400">At Risk</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Processing Pipeline -->
+          <div class="glass-card p-8">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-6">
+              AI Agent Pipeline
+            </div>
+
+            <div class="space-y-4">
+              <!-- Agent 1: Bodha - Context Analysis -->
+              <div
+                class="info-card border-l-2 pl-4"
+                :class="events.some(e => e.agent === 'Bodha') ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-lg flex items-center justify-center"
+                      :class="events.some(e => e.agent === 'Bodha') ? 'bg-emerald-500/20' : 'bg-gray-800'"
+                    >
+                      <i
+                        class="fas fa-eye"
+                        :class="events.some(e => e.agent === 'Bodha') ? 'text-emerald-400' : 'text-gray-600'"
+                      ></i>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-white text-sm">
+                        Bodha - Context Agent
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Analyzing sentiment & urgency
+                      </div>
+                    </div>
+                  </div>
+                  <div x-show="events.some(e => e.agent === 'Bodha')">
+                    <i class="fas fa-check-circle text-emerald-400"></i>
+                  </div>
+                  <div
+                    x-show="!events.some(e => e.agent === 'Bodha') && demoRunning && events.length > 0"
+                  >
+                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Agent 2: Dhyana - Pattern Recognition -->
+              <div
+                class="info-card border-l-2 pl-4"
+                :class="events.some(e => e.agent === 'Dhyana') ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-lg flex items-center justify-center"
+                      :class="events.some(e => e.agent === 'Dhyana') ? 'bg-emerald-500/20' : 'bg-gray-800'"
+                    >
+                      <i
+                        class="fas fa-chart-line"
+                        :class="events.some(e => e.agent === 'Dhyana') ? 'text-emerald-400' : 'text-gray-600'"
+                      ></i>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-white text-sm">
+                        Dhyana - Pattern Agent
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Identifying behavioral patterns
+                      </div>
+                    </div>
+                  </div>
+                  <div x-show="events.some(e => e.agent === 'Dhyana')">
+                    <i class="fas fa-check-circle text-emerald-400"></i>
+                  </div>
+                  <div
+                    x-show="!events.some(e => e.agent === 'Dhyana') && events.some(e => e.agent === 'Bodha') && demoRunning"
+                  >
+                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Agent 3: Niti - Decision Making -->
+              <div
+                class="info-card border-l-2 pl-4"
+                :class="events.some(e => e.agent === 'Niti') ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-lg flex items-center justify-center"
+                      :class="events.some(e => e.agent === 'Niti') ? 'bg-emerald-500/20' : 'bg-gray-800'"
+                    >
+                      <i
+                        class="fas fa-gavel"
+                        :class="events.some(e => e.agent === 'Niti') ? 'text-emerald-400' : 'text-gray-600'"
+                      ></i>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-white text-sm">
+                        Niti - Decision Agent
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Determining optimal strategy
+                      </div>
+                    </div>
+                  </div>
+                  <div x-show="events.some(e => e.agent === 'Niti')">
+                    <i class="fas fa-check-circle text-emerald-400"></i>
+                  </div>
+                  <div
+                    x-show="!events.some(e => e.agent === 'Niti') && events.some(e => e.agent === 'Dhyana') && demoRunning"
+                  >
+                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Agent 4: Message Generation -->
+              <div
+                class="info-card border-l-2 pl-4"
+                :class="events.some(e => e.type === 'message_preview') ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-lg flex items-center justify-center"
+                      :class="events.some(e => e.agent === 'Karuna') ? 'bg-emerald-500/20' : 'bg-gray-800'"
+                    >
+                      <i
+                        class="fas fa-message"
+                        :class="events.some(e => e.agent === 'Karuna') ? 'text-emerald-400' : 'text-gray-600'"
+                      ></i>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-white text-sm">
+                        Karuna - Empathy Agent
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Crafting empathetic message (Tamil)
+                      </div>
+                    </div>
+                  </div>
+                  <div x-show="events.some(e => e.agent === 'Karuna')">
+                    <i class="fas fa-check-circle text-emerald-400"></i>
+                  </div>
+                  <div
+                    x-show="!events.some(e => e.agent === 'Karuna') && events.some(e => e.agent === 'Niti') && demoRunning"
+                  >
+                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Intervention Details Card -->
+          <div x-show="interventionData" class="glass-card p-8">
+            <div
+              class="text-xs text-gray-500 uppercase tracking-wider mb-4 flex items-center justify-between"
+            >
+              <span>Intervention Deployed</span>
+              <span class="text-emerald-400"
+                ><i class="fas fa-check-circle mr-1"></i>Sent</span
+              >
+            </div>
+
+            <div class="mb-4 flex items-center gap-3 flex-wrap">
+              <span
+                class="text-xs px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20"
+              >
+                <i class="fas fa-language mr-1"></i
+                ><span x-text="interventionData?.language || 'Tamil'"></span>
+              </span>
+              <span
+                class="text-xs px-2 py-1 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20"
+              >
+                <i class="fas fa-whatsapp mr-1"></i
+                ><span x-text="interventionData?.channel || 'WhatsApp'"></span>
+              </span>
+              <span
+                class="text-xs px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              >
+                <i class="fas fa-heart mr-1"></i
+                ><span x-text="interventionData?.tone || 'Empathetic'"></span>
+              </span>
+              <span
+                x-show="interventionData?.priority"
+                class="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20"
+              >
+                <i class="fas fa-exclamation-circle mr-1"></i
+                ><span x-text="interventionData?.priority"></span>
+              </span>
+            </div>
+
+            <!-- Message -->
+            <div
+              class="bg-white/[0.02] rounded-xl p-5 border border-white/5 mb-4 max-h-48 overflow-y-auto"
+            >
+              <div
+                class="text-sm leading-relaxed text-gray-300"
+                style="white-space: pre-wrap; line-height: 1.8"
+                x-text="interventionData?.message || 'Generating...'"
+              ></div>
+            </div>
+
+            <!-- Action & Details -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
+                <div class="text-xs text-gray-500 mb-1">Recommended Action</div>
+                <div
+                  class="text-sm text-white font-medium"
+                  x-text="interventionData?.action || '—'"
+                ></div>
+              </div>
+              <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
+                <div class="text-xs text-gray-500 mb-1">Processing Time</div>
+                <div class="text-sm text-amber-400 font-bold">
+                  <i class="fas fa-stopwatch mr-1"></i>
+                  <span
+                    x-text="interventionData?.duration ? interventionData.duration + 's' : '—'"
+                  ></span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Active Scenario - Minimalist Design -->
-        <div class="glass-card p-8 mb-12 border-l-4 border-l-indigo-500">
-            <div class="flex items-center gap-6">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30">
-                    <i class="fas fa-credit-card text-2xl text-indigo-400"></i>
-                </div>
-                <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                        <h3 class="text-xl font-semibold text-white">Payment Failure Detection</h3>
-                        <span class="text-xs px-2 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                            Active Scenario
-                        </span>
-                    </div>
-                    <p class="text-sm text-gray-400 mb-4">
-                        Real-time event from payment gateway • VIP customer payment declined
-                    </p>
-                    <div class="grid grid-cols-4 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-500">Customer</span>
-                            <div class="text-white font-medium">Tanya Kumar</div>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Tier</span>
-                            <div class="text-amber-400 font-medium">VIP Platinum</div>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">LTV</span>
-                            <div class="text-emerald-400 font-medium">$15,000</div>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Issue</span>
-                            <div class="text-red-400 font-medium">Card Expired</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content Grid - Modern 2-Column Layout -->
-        <div class="grid grid-cols-12 gap-8">
-            
-            <!-- LEFT COLUMN: Customer + AI Agents -->
-            <div class="col-span-5 space-y-6">
-                
-                <!-- Customer Information Card -->
-                <div x-show="customerInfo" class="glass-card p-8">
-                    <div class="text-xs text-gray-500 uppercase tracking-wider mb-4">Customer Profile</div>
-                    <div class="flex items-start gap-6 mb-6">
-                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30">
-                            <i class="fas fa-user text-2xl text-indigo-400"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="text-2xl font-bold text-white mb-1" x-text="customerInfo?.customerName || 'Loading...'"></h3>
-                            <p class="text-sm text-gray-400" x-text="customerInfo?.segment + ' Customer'"></p>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs text-gray-500 mb-1">LTV</div>
-                            <div class="text-2xl font-bold text-emerald-400">
-                                $<span x-text="customerInfo?.ltv || '—'"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="info-card">
-                            <div class="text-xs text-gray-500 mb-1">ID</div>
-                            <div class="font-mono text-sm font-semibold text-white">C100924</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="text-xs text-gray-500 mb-1">Tier</div>
-                            <div class="font-semibold text-amber-400">Platinum</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="text-xs text-gray-500 mb-1">Status</div>
-                            <div class="font-semibold text-red-400">At Risk</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- AI Processing Pipeline -->
-                <div class="glass-card p-8">
-                    <div class="text-xs text-gray-500 uppercase tracking-wider mb-6">AI Agent Pipeline</div>
-                    
-                    <div class="space-y-4">
-                        <!-- Agent 1: Context Analysis -->
-                        <div class="info-card border-l-2 pl-4" 
-                             :class="events.some(e => e.message && e.message.includes('Agent 1')) ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                                         :class="events.some(e => e.message && e.message.includes('Agent 1')) ? 'bg-emerald-500/20' : 'bg-gray-800'">
-                                        <i class="fas fa-eye" 
-                                           :class="events.some(e => e.message && e.message.includes('Agent 1')) ? 'text-emerald-400' : 'text-gray-600'"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-sm">Bodha - Context Analysis</div>
-                                        <div class="text-xs text-gray-500">Analyzing sentiment & urgency</div>
-                                    </div>
-                                </div>
-                                <div x-show="events.some(e => e.message && e.message.includes('Agent 1'))">
-                                    <i class="fas fa-check-circle text-emerald-400"></i>
-                                </div>
-                                <div x-show="!events.some(e => e.message && e.message.includes('Agent 1')) && demoRunning && events.length > 0">
-                                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Agent 2: Pattern Recognition -->
-                        <div class="info-card border-l-2 pl-4" 
-                             :class="events.some(e => e.message && e.message.includes('Agent 2')) ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                                         :class="events.some(e => e.message && e.message.includes('Agent 2')) ? 'bg-emerald-500/20' : 'bg-gray-800'">
-                                        <i class="fas fa-chart-line" 
-                                           :class="events.some(e => e.message && e.message.includes('Agent 2')) ? 'text-emerald-400' : 'text-gray-600'"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-sm">Dhyana - Pattern Recognition</div>
-                                        <div class="text-xs text-gray-500">Identifying behavioral patterns</div>
-                                    </div>
-                                </div>
-                                <div x-show="events.some(e => e.message && e.message.includes('Agent 2'))">
-                                    <i class="fas fa-check-circle text-emerald-400"></i>
-                                </div>
-                                <div x-show="!events.some(e => e.message && e.message.includes('Agent 2')) && events.some(e => e.message && e.message.includes('Agent 1')) && demoRunning">
-                                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Agent 3: Decision Making -->
-                        <div class="info-card border-l-2 pl-4" 
-                             :class="events.some(e => e.message && e.message.includes('Agent 3')) ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                                         :class="events.some(e => e.message && e.message.includes('Agent 3')) ? 'bg-emerald-500/20' : 'bg-gray-800'">
-                                        <i class="fas fa-gavel" 
-                                           :class="events.some(e => e.message && e.message.includes('Agent 3')) ? 'text-emerald-400' : 'text-gray-600'"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-sm">Niti - Decision Making</div>
-                                        <div class="text-xs text-gray-500">Determining optimal strategy</div>
-                                    </div>
-                                </div>
-                                <div x-show="events.some(e => e.message && e.message.includes('Agent 3'))">
-                                    <i class="fas fa-check-circle text-emerald-400"></i>
-                                </div>
-                                <div x-show="!events.some(e => e.message && e.message.includes('Agent 3')) && events.some(e => e.message && e.message.includes('Agent 2')) && demoRunning">
-                                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Agent 4: Message Generation -->
-                        <div class="info-card border-l-2 pl-4" 
-                             :class="events.some(e => e.type === 'message_preview') ? 'border-l-emerald-500 bg-emerald-500/5' : 'border-l-gray-700'">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                                         :class="events.some(e => e.type === 'message_preview') ? 'bg-emerald-500/20' : 'bg-gray-800'">
-                                        <i class="fas fa-message" 
-                                           :class="events.some(e => e.type === 'message_preview') ? 'text-emerald-400' : 'text-gray-600'"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-sm">Karuna - Message Generation</div>
-                                        <div class="text-xs text-gray-500">Crafting empathetic message (Tamil)</div>
-                                    </div>
-                                </div>
-                                <div x-show="events.some(e => e.type === 'message_preview')">
-                                    <i class="fas fa-check-circle text-emerald-400"></i>
-                                </div>
-                                <div x-show="!events.some(e => e.type === 'message_preview') && events.some(e => e.message && e.message.includes('Agent 3')) && demoRunning">
-                                    <i class="fas fa-spinner fa-spin text-indigo-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Generated Message Card -->
-                <div x-show="messagePreview" class="glass-card p-8">
-                    <div class="text-xs text-gray-500 uppercase tracking-wider mb-4">Generated Message</div>
-                    
-                    <div class="mb-4 flex items-center gap-3">
-                        <span class="text-xs px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                            <i class="fas fa-language mr-1"></i>Tamil
-                        </span>
-                        <span class="text-xs px-2 py-1 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                            <i class="fas fa-whatsapp mr-1"></i>WhatsApp
-                        </span>
-                        <span class="text-xs px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <i class="fas fa-heart mr-1"></i>Empathetic
-                        </span>
-                    </div>
-                    
-                    <div class="bg-white/[0.02] rounded-xl p-5 border border-white/5 max-h-64 overflow-y-auto">
-                        <div class="text-sm leading-relaxed text-gray-300" style="white-space: pre-wrap; line-height: 1.8;" 
-                             x-text="messagePreview || 'Generating...'"></div>
-                    </div>
-                    
-                    <div class="mt-4 flex items-center justify-between text-xs text-gray-500">
-                        <div>
-                            <i class="fas fa-check-circle text-emerald-400 mr-1"></i>
-                            Ready for deployment
-                        </div>
-                        <div x-show="processingTime">
-                            <i class="fas fa-stopwatch mr-1"></i>
-                            Generated in <span class="font-bold text-amber-400" x-text="processingTime + 's'"></span>
-                        </div>
-                    </div>
-                </div>
+        <!-- RIGHT COLUMN: Event Stream (Compact) -->
+        <div class="col-span-7">
+          <div class="glass-card p-6 h-[900px] flex flex-col">
+            <div
+              class="flex items-center justify-between mb-6 pb-4 border-b border-white/5"
+            >
+              <h2
+                class="text-lg font-semibold text-white flex items-center gap-2"
+              >
+                <i class="fas fa-stream text-indigo-400"></i>
+                Event Timeline
+              </h2>
+              <span
+                class="text-xs px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                x-text="events.length + ' events'"
+              ></span>
             </div>
 
-            <!-- RIGHT COLUMN: Event Stream (Compact) -->
-            <div class="col-span-7">
-                <div class="glass-card p-6 h-[900px] flex flex-col">
-                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
-                        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                            <i class="fas fa-stream text-indigo-400"></i>
-                            Event Timeline
-                        </h2>
-                        <span class="text-xs px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" 
-                              x-text="events.length + ' events'"></span>
-                    </div>
-                    
-                    <div class="flex-1 overflow-y-auto pr-2">
-                        <!-- Demo Complete Badge -->
-                        <div x-show="!demoRunning && events.length > 0" class="mb-6 glass-card p-6 text-center border-2 border-emerald-500/50">
-                            <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                <i class="fas fa-check-circle text-3xl text-emerald-400"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-emerald-400 mb-2">Demo Complete!</h3>
-                            <p class="text-sm text-gray-400">All AI agents have finished processing</p>
-                        </div>
-                        
-                        <template x-for="(event, index) in events.slice().reverse()" :key="index">
-                            <div class="mb-4">
-                                <div class="flex items-start gap-3">
-                                    <!-- Timeline Dot -->
-                                    <div class="flex-shrink-0 mt-1">
-                                        <div class="w-3 h-3 rounded-full"
-                                             :class="{
+            <div class="flex-1 overflow-y-auto pr-2">
+              <template x-for="(event, index) in events" :key="index">
+                <div class="mb-4">
+                  <div class="flex items-start gap-3">
+                    <!-- Timeline Dot -->
+                    <div class="flex-shrink-0 mt-1">
+                      <div
+                        class="w-3 h-3 rounded-full"
+                        :class="{
                                                  'bg-red-400': event.type === 'payment_failure',
                                                  'bg-indigo-400': event.type === 'agent_processing',
                                                  'bg-emerald-400': event.type === 'intervention_ready',
                                                  'bg-blue-400': event.type === 'customer_info',
                                                  'bg-amber-400': event.type === 'message_preview',
                                                  'bg-gray-500': !event.type || event.type === 'processing_time'
-                                             }"></div>
-                                    </div>
-                                    
-                                    <!-- Event Content -->
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-3 mb-1">
-                                            <div class="text-xs text-gray-500 font-mono" 
-                                                 x-text="new Date(event.timestamp).toLocaleTimeString('en-US', {hour12: false})"></div>
-                                            <div x-show="event.type" class="text-xs px-2 py-0.5 rounded"
-                                                  :class="{
-                                                      'bg-red-500/10 text-red-400': event.type === 'payment_failure',
-                                                      'bg-indigo-500/10 text-indigo-400': event.type === 'agent_processing',
-                                                      'bg-emerald-500/10 text-emerald-400': event.type === 'intervention_ready',
-                                                      'bg-blue-500/10 text-blue-400': event.type === 'customer_info',
-                                                      'bg-amber-500/10 text-amber-400': event.type === 'message_preview'
-                                                  }"
-                                                  x-text="event.type?.replace(/_/g, ' ')"></div>
-                                        </div>
-                                        
-                                        <div class="text-sm text-gray-200" x-text="event.event || event.message || 'Processing...'"></div>
-                                        
-                                        <!-- Customer Details - Only show once -->
-                                        <div x-show="event.customerName && event.type === 'customer_info'" class="text-xs text-gray-500 mt-2">
-                                            <span x-text="event.customerName"></span> • 
-                                            <span x-text="event.segment"></span> • 
-                                            <span class="text-emerald-400">$<span x-text="event.ltv"></span></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                        
-                        <!-- Empty State -->
-                        <div x-show="events.length === 0" class="text-center py-24">
-                            <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                                <i class="fas fa-circle-notch fa-spin text-2xl text-indigo-400"></i>
-                            </div>
-                            <p class="text-gray-500 text-sm">Initializing system...</p>
-                        </div>
+                                             }"
+                      ></div>
                     </div>
+
+                    <!-- Event Content -->
+                    <div class="flex-1">
+                      <div class="flex items-center gap-3 mb-1">
+                        <div
+                          class="text-xs text-gray-500 font-mono"
+                          x-text="new Date(event.timestamp).toLocaleTimeString('en-US', {hour12: false})"
+                        ></div>
+                      </div>
+
+                      <div
+                        class="text-sm text-gray-200 font-medium"
+                        x-text="event.event || event.message || 'Processing...'"
+                      ></div>
+
+                      <!-- Customer Details - Only show once -->
+                      <div
+                        x-show="event.customerName && event.type === 'customer_info'"
+                        class="text-xs text-gray-500 mt-2"
+                      >
+                        <span x-text="event.customerName"></span> •
+                        <span x-text="event.segment"></span> •
+                        <span class="text-emerald-400"
+                          >$<span x-text="event.ltv"></span
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </template>
+
+              <!-- Empty State -->
+              <div x-show="events.length === 0" class="text-center py-24">
+                <div
+                  class="w-12 h-12 mx-auto mb-4 rounded-full bg-indigo-500/10 flex items-center justify-center"
+                >
+                  <i
+                    class="fas fa-circle-notch fa-spin text-2xl text-indigo-400"
+                  ></i>
+                </div>
+                <p class="text-gray-500 text-sm">Initializing system...</p>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
-
     <script>
-        function realtimeShowcase() {
+      function realtimeShowcase() {
+        return {
+          socket: null,
+          demoRunning: false,
+          events: [],
+          currentScenario: null,
+
+          // Computed properties
+          get latestEvent() {
+            return this.events.length > 0
+              ? this.events[this.events.length - 1]
+              : null;
+          },
+
+          get customerInfo() {
+            return this.events.find((e) => e.type === "customer_info");
+          },
+
+          get processingMessage() {
+            const processingEvents = this.events.filter(
+              (e) => e.type === "agent_processing"
+            );
+            return processingEvents.length > 0
+              ? processingEvents[processingEvents.length - 1].message
+              : null;
+          },
+
+          get messagePreview() {
+            const messageEvent = this.events.find(
+              (e) => e.type === "message_preview"
+            );
+            return messageEvent ? messageEvent.message : null;
+          },
+
+          get interventionData() {
+            const interventionEvent = this.events.find(
+              (e) => e.type === "intervention_ready"
+            );
+            if (!interventionEvent) return null;
             return {
-                socket: null,
-                demoRunning: false,
-                events: [],
-                currentScenario: null,
-                currentEventIndex: 0,
-                
-                // Pre-loaded simulation data - matches actual demo_realtime.py output
-                simulationData: [
-                    {
-                        timestamp: new Date(Date.now()),
-                        type: 'customer_info',
-                        event: '💳 VIP customer payment FAILS',
-                        customerName: 'Tanya Kumar',
-                        segment: 'VIP',
-                        ltv: '15,000',
-                        message: 'Customer: Tanya Kumar | VIP | LTV: $15,000\nReason: Card expired'
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 1000),
-                        type: 'payment_failure',
-                        event: '🚨 Event captured, AI agents triggered',
-                        message: 'Real-time payment failure detected from payment gateway'
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 2000),
-                        type: 'agent_processing',
-                        event: '🤖 Multi-Agent Processing Started',
-                        message: 'Agent 1: Context Analysis (Bodha) - Analyzing customer sentiment & urgency'
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 5000),
-                        type: 'agent_processing',
-                        event: '🔍 Pattern Recognition',
-                        message: 'Agent 2: Pattern Recognition (Dhyana) - Identifying behavioral patterns'
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 8000),
-                        type: 'agent_processing',
-                        event: '⚖️ Decision Making',
-                        message: 'Agent 3: Decision Making (Niti) - Determining optimal intervention strategy'
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 11000),
-                        type: 'agent_processing',
-                        event: '✍️ Message Generation',
-                        message: 'Agent 4: Message Generation (Karuna) - Crafting personalized empathetic message in Tamil'
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 15000),
-                        type: 'message_preview',
-                        event: '✅ Intervention READY!',
-                        message: `வணக்கம் Tanya,
+              message: interventionEvent.message,
+              action: interventionEvent.action,
+              priority: interventionEvent.priority,
+              language: interventionEvent.language,
+              channel: interventionEvent.channel,
+              tone: interventionEvent.tone,
+              duration: interventionEvent.duration,
+            };
+          },
 
-நீங்கள் எங்களுடன் இருந்த அனுபவத்தில் ஏற்பட்ட சிரமம் குறித்து மிகவும் வருந்துகிறோம். உங்கள் கார்டின் காலாவதி காரணமாக பணம் செலுத்துவதில் சிக்கல் ஏற்பட்டதை அறிந்து மனம் கலங்கிவிட்டோம்.
+          get processingTime() {
+            const timeEvent = this.events.find(
+              (e) => e.type === "processing_time"
+            );
+            return timeEvent ? timeEvent.duration : null;
+          },
 
-நாங்கள் உடனடியாக இந்தப் பிரச்சினையைத் தீர்க்க நடவடிக்கை எடுத்து உள்ளோம். உங்கள் VIP பிளாட்டினம் நிலையை கருத்தில் கொண்டு, நாங்கள் உங்கள் கணக்கில் 15% சிறப்பு தள்ளுபடியை சேர்த்துள்ளோம்.
-
-உங்கள் சேவையை தொடர்ந்து அனுபவிக்க எங்களது பிரீமியம் ஆதரவு குழு தயாராக உள்ளது. ஏதேனும் உதவி தேவைப்பட்டால் தயவுசெய்து எங்களை தொடர்பு கொள்ளவும்.
-
-நன்றி,
-ProCX குழு 💙`
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 16000),
-                        type: 'intervention_ready',
-                        event: '🎯 Intervention Deployed',
-                        message: 'WhatsApp message sent | Language: Tamil | Channel: WhatsApp',
-                        duration: 16
-                    },
-                    {
-                        timestamp: new Date(Date.now() + 16500),
-                        type: 'processing_time',
-                        event: '⏱️ Processing Complete',
-                        message: 'Event-to-Intervention: 16 seconds',
-                        duration: 16
-                    }
-                ],
-                
-                // Computed properties
-                get latestEvent() {
-                    return this.events.length > 0 ? this.events[this.events.length - 1] : null;
-                },
-                
-                get customerInfo() {
-                    return this.events.find(e => e.type === 'customer_info');
-                },
-                
-                get processingMessage() {
-                    const processingEvents = this.events.filter(e => e.type === 'agent_processing');
-                    return processingEvents.length > 0 ? processingEvents[processingEvents.length - 1].message : null;
-                },
-                
-                get messagePreview() {
-                    const messageEvent = this.events.find(e => e.type === 'message_preview');
-                    return messageEvent ? messageEvent.message : null;
-                },
-                
-                get processingTime() {
-                    const timeEvent = this.events.find(e => e.type === 'processing_time');
-                    return timeEvent ? timeEvent.duration : null;
-                },
-                
-                init() {
-                    console.log('🚀 Initializing ProCX Real-Time Showcase (Simulation Mode)');
-                    this.startSimulation();
-                },
-                
-                showToast(message, type = 'success') {
-                    const toastContainer = document.getElementById('toastContainer');
-                    const toastId = 'toast-' + Date.now();
-                    
-                    const icons = {
-                        success: '✅',
-                        info: 'ℹ️',
-                        processing: '⚙️',
-                        complete: '🎯'
-                    };
-                    
-                    const colors = {
-                        success: 'border-green-500/40 shadow-green-500/20',
-                        info: 'border-blue-500/40 shadow-blue-500/20',
-                        processing: 'border-purple-500/40 shadow-purple-500/20',
-                        complete: 'border-pink-500/40 shadow-pink-500/20'
-                    };
-                    
-                    const toast = document.createElement('div');
-                    toast.id = toastId;
-                    toast.className = `toast ${colors[type] || colors.success}`;
-                    toast.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="text-2xl">${icons[type] || icons.success}</div>
-                            <div class="flex-1">
-                                <div class="font-bold text-white">${message}</div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    toastContainer.appendChild(toast);
-                    
-                    // Auto-remove after 3 seconds
-                    setTimeout(() => {
-                        toast.classList.add('fade-out');
-                        setTimeout(() => {
-                            toast.remove();
-                        }, 300);
-                    }, 3000);
-                },
-                
-                startSimulation() {
-                    this.demoRunning = true;
-                    this.events = [];
-                    this.currentEventIndex = 0;
-                    this.currentScenario = 'payment_failure';
-                    
-                    console.log('🎬 Starting real-time simulation...');
-                    
-                    // Play events according to their timestamps
-                    this.playNextEvent();
-                },
-                
-                playNextEvent() {
-                    if (this.currentEventIndex >= this.simulationData.length) {
-                        console.log('✅ Simulation complete');
-                        this.demoRunning = false;
-                        this.showToast('Demo Complete - All Processing Finished! 🎉', 'complete');
-                        return;
-                    }
-                    
-                    const event = this.simulationData[this.currentEventIndex];
-                    const nextEvent = this.simulationData[this.currentEventIndex + 1];
-                    
-                    // Add event to display
-                    this.events.push({
-                        ...event,
-                        timestamp: new Date()
-                    });
-                    
-                    console.log('📥 Event added:', event.event);
-                    
-                    // Show toast for key events
-                    if (event.type === 'payment_failure') {
-                        this.showToast('Payment failure detected!', 'info');
-                    } else if (event.type === 'agent_processing') {
-                        this.showToast(event.event, 'processing');
-                    } else if (event.type === 'intervention_ready') {
-                        this.showToast('Intervention ready for deployment!', 'success');
-                    } else if (event.type === 'message_preview') {
-                        this.showToast('Tamil message generated successfully!', 'success');
-                    }
-                    
-                    // Auto-scroll to latest event
-                    this.$nextTick(() => {
-                        const timeline = document.querySelector('.timeline-line');
-                        if (timeline) {
-                            timeline.scrollTop = 0; // Scroll to top since we reverse the list
-                        }
-                    });
-                    
-                    this.currentEventIndex++;
-                    
-                    // Calculate delay to next event
-                    if (nextEvent) {
-                        const delay = this.currentEventIndex === 1 ? 1000 :
-                                     this.currentEventIndex === 2 ? 1000 :
-                                     this.currentEventIndex === 3 ? 3000 :
-                                     this.currentEventIndex === 4 ? 3000 :
-                                     this.currentEventIndex === 5 ? 3000 :
-                                     this.currentEventIndex === 6 ? 4000 :
-                                     this.currentEventIndex === 7 ? 1000 :
-                                     this.currentEventIndex === 8 ? 500 : 2000;
-                        
-                        setTimeout(() => {
-                            this.playNextEvent();
-                        }, delay);
-                    } else {
-                        this.playNextEvent(); // Last event, will trigger completion
-                    }
-                }
+          init() {
+            console.log("🚀 Initializing ProCX Real-Time Showcase");
+            // Wait for Socket.IO to load
+            if (typeof io === "undefined") {
+              console.log("⏳ Waiting for Socket.IO...");
+              setTimeout(() => this.connectWebSocket(), 100);
+            } else {
+              this.connectWebSocket();
             }
-        }
+          },
+
+          connectWebSocket() {
+            if (typeof io === "undefined") {
+              console.error("❌ Socket.IO not loaded!");
+              return;
+            }
+
+            console.log("📡 Connecting to WebSocket server...");
+
+            // Connect to local server
+            this.socket = io("http://localhost:5001");
+
+            // Connection events
+            this.socket.on("connection_established", (data) => {
+              console.log("✅ Connected to server:", data);
+            });
+
+            // Demo events
+            this.socket.on("demo_event", (data) => {
+              console.log("📥 Event received:", data);
+
+              // Add to events array
+              this.events.push({
+                ...data,
+                timestamp: new Date(data.timestamp),
+              });
+
+              // Auto-scroll to latest
+              this.$nextTick(() => {
+                const timeline = document.querySelector(
+                  ".flex-1.overflow-y-auto"
+                );
+                if (timeline) {
+                  timeline.scrollTop = timeline.scrollHeight;
+                }
+              });
+            });
+
+            this.socket.on("demo_started", (data) => {
+              console.log("🎬 Demo started:", data);
+              this.demoRunning = true;
+              this.events = [];
+            });
+
+            this.socket.on("demo_completed", (data) => {
+              console.log("✅ Demo completed:", data);
+              this.demoRunning = false;
+            });
+
+            this.socket.on("demo_error", (data) => {
+              console.error("❌ Demo error:", data);
+              this.demoRunning = false;
+            });
+
+            this.socket.on("disconnect", () => {
+              console.log("👋 Disconnected from server");
+            });
+          },
+
+          startDemo() {
+            if (this.demoRunning) {
+              console.log("Demo is already running");
+              return;
+            }
+
+            console.log("🎬 Requesting demo start...");
+            this.socket.emit("start_demo");
+          },
+        };
+      }
     </script>
-</body>
+
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  </body>
 </html>

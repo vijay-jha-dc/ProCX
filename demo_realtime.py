@@ -30,29 +30,8 @@ def dramatic_print(text: str, delay: float = 0.6):
     time.sleep(delay)
 
 
-def cleanup_demo_data():
-    """Clean up demo customer data for fresh run"""
-    demo_customer_id = "C100924"
-    
-    # Remove memory files
-    memory_file = Path(f"data/memory/{demo_customer_id}.jsonl")
-    if memory_file.exists():
-        memory_file.unlink()
-    
-    # Remove escalation files
-    escalation_dir = Path("data/escalations")
-    if escalation_dir.exists():
-        for file in escalation_dir.glob(f"*{demo_customer_id}*.jsonl"):
-            file.unlink()
-        for file in escalation_dir.glob("active_escalations.jsonl"):
-            file.unlink()
-
-
 def simulate_payment_failure():
     """Simulates real-time payment failure intervention"""
-    
-    # Clean up any previous demo data
-    cleanup_demo_data()
     
     print("\n" + "="*70)
     print(" REAL-TIME EVENT: Payment Failure Detection")
@@ -116,7 +95,7 @@ def simulate_payment_failure():
     
     # Process through actual workflow
     start_time = time.time()
-    result = procx.process_proactive_event(event, verbose=True)
+    result = procx.process_proactive_event(event, verbose=False)
     elapsed = time.time() - start_time
     
     # Show results with timing
@@ -142,7 +121,7 @@ def simulate_payment_failure():
     if result.personalized_response:
         print(f"\n Generated Message Preview:")
         print("-"*70)
-        safe_print(result.personalized_response[:300] + "...")
+        print(result.personalized_response[:300] + "...")
         print("-"*70)
     
     print("\n" + "="*70)

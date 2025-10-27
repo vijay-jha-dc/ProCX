@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils import ProactiveMonitor, DataAnalytics, EscalationTracker
+from utils import ProactiveMonitor, DataAnalytics, EscalationTracker, MemoryHandler
 from workflows import create_cx_workflow, run_workflow, stream_workflow
 from models import AgentState, CustomerEvent, EventType, Customer
 from config import settings
@@ -36,6 +36,7 @@ cached_risk_distribution = {}
 monitor = ProactiveMonitor()
 analytics = DataAnalytics()
 escalation_tracker = EscalationTracker()
+memory_handler = MemoryHandler()
 workflow = create_cx_workflow()
 
 print("✅ ProCX Backend ready")
@@ -430,6 +431,42 @@ def run_agents_with_tracking(customer, event, alert):
     
     global processed_customers
     
+    # 🔥 NEW: Check if customer was already contacted in last 24 hours
+    recent_history = memory_handler.get_recent_interactions(
+        customer.customer_id,
+        days=1  # Last 24 hours
+    )
+    
+    if recent_history:
+        last_interaction = recent_history[0]
+        timestamp = datetime.fromisoformat(last_interaction['timestamp'])
+        hours_ago = (datetime.now() - timestamp).total_seconds() / 3600
+        
+        if hours_ago < 24:
+            print(f"\n{'='*70}")
+            print(f"[SKIP] Customer already contacted {hours_ago:.1f} hours ago")
+            print(f"[SKIP] {customer.first_name} {customer.last_name} ({customer.customer_id})")
+            print(f"{'='*70}\n")
+            
+            # Mark as skipped in processed_customers
+            processed_customers[customer.customer_id] = {
+                'status': 'skipped',
+                'customerName': f"{customer.first_name} {customer.last_name}",
+                'timestamp': datetime.now().isoformat(),
+                'reason': f'Already contacted {hours_ago:.1f} hours ago',
+                'intervention': None
+            }
+            
+            # Emit skip event to frontend
+            socketio.emit('customer_skipped', {
+                'customerId': customer.customer_id,
+                'customerName': f"{customer.first_name} {customer.last_name}",
+                'reason': f'Already contacted {hours_ago:.1f} hours ago',
+                'lastContactTime': timestamp.isoformat()
+            })
+            
+            return None  # Skip processing
+    
     agent_results = {}
     
     # Mark customer as PROCESSING (internal tracking only, don't emit yet)
@@ -644,6 +681,13 @@ def run_agents_with_tracking(customer, event, alert):
                 print(f"[ESCALATION] Created escalation {escalation_id} for {customer.customer_id}")
             except Exception as e:
                 print(f"Error creating escalation: {e}")
+        
+        # 🔥 NEW: Save interaction to memory
+        try:
+            memory_handler.save_interaction(final_state)
+            print(f"[MEMORY] Saved interaction for customer {customer.customer_id}")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not save to memory: {e}")
         
         return intervention
         

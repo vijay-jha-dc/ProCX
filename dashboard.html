@@ -1640,6 +1640,15 @@
         .toast.hiding {
             animation: slideOutRight 0.3s ease-in forwards;
         }
+
+        /* Hide scrollbar but keep scroll functionality */
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;  /* Chrome, Safari, Opera */
+        }
     </style>
 </head>
 <body>
@@ -1909,15 +1918,7 @@
                         <!-- Logo & Title -->
                         <div class="flex items-center gap-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                                    <i class="fas fa-brain text-white text-xl"></i>
-                                </div>
-                                <div>
-                                    <h1 class="text-2xl font-bold text-white">
-                                        ProCX
-                                    </h1>
-                                    <p class="text-sm text-gray-400">AI-Powered Customer Experience Revolution</p>
-                                </div>
+                                <img src="/assets/logo.png" alt="ProCX Logo" class="h-16 w-auto" style="filter: brightness(1.1);">
                             </div>
                         </div>
 
@@ -1927,8 +1928,8 @@
                             <button @click="runProactiveScan()" 
                                     class="btn btn-scan" 
                                     :disabled="scanInProgress || scanCompleted">
-                                <i :class="scanCompleted ? 'fas fa-check-circle' : 'fas fa-rocket'"></i>
-                                <span x-text="scanCompleted ? 'Scan Completed ✓' : (scanInProgress ? 'Processing...' : 'Process Customers')"></span>
+                                <i :class="scanInProgress || scanCompleted ? 'fas fa-spinner fa-spin' : 'fas fa-rocket'"></i>
+                                <span x-text="scanInProgress || scanCompleted ? 'Processing...' : 'Process 10 Customers'"></span>
                             </button>
                         </div>
                     </div>
@@ -2008,7 +2009,7 @@
 
             <!-- Tab Navigation -->
             <div class="flex justify-center mb-8">
-                <div class="inline-flex gap-2 bg-gray-800/50 backdrop-blur-sm rounded-xl p-1.5 border border-gray-700/50">
+                <div class="inline-flex gap-2 bg-gray-800/50 backdrop-blur-sm rounded-xl p-1.5 border border-gray-700/50 flex-wrap justify-center max-w-7xl">
                     <button @click="activeTab = 'overview'" 
                             :class="activeTab === 'overview' ? 'active' : ''"
                             class="tab-button flex items-center gap-2">
@@ -2020,21 +2021,18 @@
                             class="tab-button flex items-center gap-2">
                         <i class="fas fa-brain"></i>
                         <span>Agents</span>
-                        <span class="badge badge-success" x-show="stats.aiInterventions > 0" x-text="stats.aiInterventions"></span>
                     </button>
                     <button @click="activeTab = 'atRisk'" 
                             :class="activeTab === 'atRisk' ? 'active' : ''"
                             class="tab-button flex items-center gap-2">
                         <i class="fas fa-exclamation-triangle"></i>
                         <span>At-Risk Customers</span>
-                        <span class="badge badge-warning" x-show="stats.atRisk > 0" x-text="stats.atRisk"></span>
                     </button>
                     <button @click="activeTab = 'reactive'" 
                             :class="activeTab === 'reactive' ? 'active' : ''"
                             class="tab-button flex items-center gap-2">
                         <i class="fas fa-user-shield"></i>
                         <span>Escalation Queue</span>
-                        <span class="badge badge-critical" x-show="stats.escalated > 0" x-text="stats.escalated"></span>
                     </button>
                     <button @click="activeTab = 'history'" 
                             :class="activeTab === 'history' ? 'active' : ''"
@@ -2357,70 +2355,46 @@
                 <!-- AT-RISK CUSTOMERS TAB -->
                 <div x-show="activeTab === 'atRisk'" class="space-y-6">
 
-                    <!-- Filter Bar -->
-                    <div class="glass-card p-4">
-                        <div class="flex items-center gap-4 flex-wrap">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm text-gray-400">Risk Level:</span>
-                                <button @click="atRiskFilter = 'all'" 
-                                        :class="atRiskFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    All
-                                </button>
-                                <button @click="atRiskFilter = 'critical'" 
-                                        :class="atRiskFilter === 'critical' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    Critical
-                                </button>
-                                <button @click="atRiskFilter = 'high'" 
-                                        :class="atRiskFilter === 'high' ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    High
-                                </button>
-                                <button @click="atRiskFilter = 'medium'" 
-                                        :class="atRiskFilter === 'medium' ? 'bg-yellow-600 text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    Medium
-                                </button>
-                            </div>
-                            <div class="h-6 w-px bg-gray-700"></div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm text-gray-400">Status:</span>
-                                <button @click="atRiskStatusFilter = 'all'" 
-                                        :class="atRiskStatusFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    All
-                                </button>
-                                <button @click="atRiskStatusFilter = 'auto-sent'" 
-                                        :class="atRiskStatusFilter === 'auto-sent' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    Auto Sent (AI)
-                                </button>
-                                <button @click="atRiskStatusFilter = 'intervention-sent'" 
-                                        :class="atRiskStatusFilter === 'intervention-sent' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    Intervention Sent
-                                </button>
-                                <button @click="atRiskStatusFilter = 'monitoring'" 
-                                        :class="atRiskStatusFilter === 'monitoring' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                                    Monitoring
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Split Panel: Customer List + Details -->
                     <div class="grid grid-cols-12 gap-6">
                         
                         <!-- LEFT PANEL: At-Risk Customer List -->
                         <div class="col-span-5">
                             <div class="glass-card p-6">
-                                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <i class="fas fa-list text-orange-400"></i>
-                                    At-Risk Customers
-                                    <span class="text-sm text-gray-400 font-normal ml-auto" x-text="`${filteredAtRiskCustomers.length} customers`"></span>
-                                </h3>
+                                <div class="mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <h3 class="text-lg font-bold flex items-center gap-2 whitespace-nowrap flex-shrink-0">
+                                            <i class="fas fa-list text-orange-400"></i>
+                                            At-Risk Customers
+                                            <span class="flex items-center justify-center w-7 h-7 bg-red-500 text-white text-xs font-bold rounded-full" 
+                                                  x-text="atRiskCustomers.length"></span>
+                                        </h3>
+                                        
+                                        <!-- Risk Level Filters - scrollable without scrollbar -->
+                                        <div class="flex items-center gap-2 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
+                                            <button @click="atRiskFilter = 'all'" 
+                                                    :class="atRiskFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-700/50 text-gray-400'"
+                                                    class="px-3 py-1.5 rounded text-xs font-medium transition-all hover:bg-gray-600 whitespace-nowrap flex-shrink-0">
+                                                All
+                                            </button>
+                                            <button @click="atRiskFilter = 'critical'" 
+                                                    :class="atRiskFilter === 'critical' ? 'bg-red-600 text-white' : 'bg-gray-700/50 text-gray-400'"
+                                                    class="px-3 py-1.5 rounded text-xs font-medium transition-all hover:bg-gray-600 whitespace-nowrap flex-shrink-0">
+                                                Critical
+                                            </button>
+                                            <button @click="atRiskFilter = 'high'" 
+                                                    :class="atRiskFilter === 'high' ? 'bg-orange-600 text-white' : 'bg-gray-700/50 text-gray-400'"
+                                                    class="px-3 py-1.5 rounded text-xs font-medium transition-all hover:bg-gray-600 whitespace-nowrap flex-shrink-0">
+                                                High
+                                            </button>
+                                            <button @click="atRiskFilter = 'medium'" 
+                                                    :class="atRiskFilter === 'medium' ? 'bg-yellow-600 text-white' : 'bg-gray-700/50 text-gray-400'"
+                                                    class="px-3 py-1.5 rounded text-xs font-medium transition-all hover:bg-gray-600 whitespace-nowrap flex-shrink-0">
+                                                Medium
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <div class="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
                                     <template x-for="customer in filteredAtRiskCustomers" :key="customer.id">
@@ -2560,8 +2534,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Action Taken by AI (Only show if escalated) -->
-                                <div class="mb-6" x-show="selectedAtRiskCustomer?.status === 'escalated' && selectedAtRiskCustomer?.processedInfo?.intervention?.actionTaken">
+                                <!-- Action Taken by AI (ONLY show if discount was applied) -->
+                                <div class="mb-6" x-show="(selectedAtRiskCustomer?.status === 'sent' || selectedAtRiskCustomer?.status === 'escalated') && selectedAtRiskCustomer?.processedInfo?.discountApplied">
                                     <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
                                         <i class="fas fa-check-circle text-green-400"></i>
                                         Action Taken by AI
@@ -2569,12 +2543,14 @@
                                     <div class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-lg p-4">
                                         <div class="flex items-start gap-3">
                                             <i class="fas fa-tag text-green-400 mt-1"></i>
-                                            <div>
-                                                <p class="text-sm font-medium text-green-300 mb-1">Automated Actions Applied</p>
-                                                <p class="text-sm text-gray-300 leading-relaxed" x-text="selectedAtRiskCustomer?.processedInfo?.intervention?.actionTaken"></p>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-green-300 mb-1">Discount Applied</p>
+                                                <p class="text-sm text-gray-300 leading-relaxed mb-2">
+                                                    Applied <span class="font-bold text-green-400" x-text="selectedAtRiskCustomer?.processedInfo?.discountApplied + '%'"></span> discount to customer account
+                                                </p>
                                                 <div class="mt-2 text-xs text-gray-400">
                                                     <i class="fas fa-info-circle"></i>
-                                                    System approved within policy limits - ready for human review
+                                                    Automated retention incentive approved within policy limits
                                                 </div>
                                             </div>
                                         </div>
@@ -3005,7 +2981,7 @@
                                             <div class="flex items-center gap-4 text-sm text-gray-400">
                                                 <span x-text="selectedEscalation?.segment"></span>
                                                 <span>•</span>
-                                                <span x-text="'LTV: ₹' + selectedEscalation?.ltv?.toLocaleString()"></span>
+                                                <span x-text="'LTV: $' + selectedEscalation?.ltv?.toLocaleString()"></span>
                                                 <span>•</span>
                                                 <span x-text="'Risk: ' + selectedEscalation?.churnRisk + '%'"></span>
                                                 <span>•</span>
@@ -3131,15 +3107,21 @@
                 <!-- HISTORY TAB -->
                 <div x-show="activeTab === 'history'" class="space-y-8">
                     <div class="glass-card p-6">
-                        <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                            <i class="fas fa-history text-info"></i>
-                            Intervention History
+                        <h2 class="text-xl font-bold mb-6 flex items-center gap-2 justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-history text-info"></i>
+                                Intervention History
+                            </div>
+                            <div class="flex items-center gap-3">
+                             
+                            </div>
                         </h2>
                         
                         <div class="space-y-4">
-                            <template x-for="intervention in recentInterventions" :key="intervention.id">
+                            <template x-for="(intervention, index) in recentInterventions" :key="intervention.id || `int_${index}`">
                                 <div class="p-6 rounded-lg glass-card border-l-4" 
-                                     :class="intervention.type === 'escalation-resolved' ? 'border-blue-500' : 'border-green-500'">
+                                     :class="intervention.type === 'escalation-resolved' ? 'border-blue-500' : 'border-green-500'"
+                                     x-data="{ showMessage: false }">
                                     <div class="flex items-start justify-between mb-4">
                                         <div class="flex-1">
                                             <div class="flex items-center gap-3 mb-2">
@@ -3162,19 +3144,38 @@
                                                 </span>
                                             </div>
                                         </div>
-                                        <div class="text-right">
+                                        <div class="flex items-center gap-2">
                                             <span class="badge text-sm px-3 py-1.5" 
                                                   :class="'badge-' + intervention.priority" 
                                                   x-text="intervention.priority?.toUpperCase()"></span>
+                                            <button @click="showMessage = !showMessage" 
+                                                    class="text-gray-400 hover:text-white transition-colors p-2">
+                                                <i :class="showMessage ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+                                            </button>
                                         </div>
                                     </div>
                                     
-                                    <!-- Show message for escalation-resolved -->
-                                    <div x-show="intervention.type === 'escalation-resolved'" class="mt-4 pt-4 border-t border-gray-700">
-                                        <label class="block text-xs text-gray-400 mb-2">Message Sent:</label>
+                                    <!-- Show message ONLY when expanded (dropdown) -->
+                                    <div x-show="showMessage" 
+                                         x-transition:enter="transition ease-out duration-200"
+                                         x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                                         class="mt-4 pt-4 border-t border-gray-700">
+                                        <label class="block text-xs text-gray-400 mb-2">
+                                            <span x-show="intervention.type === 'escalation-resolved'">Message Sent (Human):</span>
+                                            <span x-show="intervention.type !== 'escalation-resolved'">Message Sent (AI Auto-Sent):</span>
+                                        </label>
                                         <div class="bg-gray-800/50 rounded-lg p-4 text-sm text-gray-300 mb-3" x-text="intervention.message"></div>
-                                        <div x-show="intervention.notes">
-                                            <label class="block text-xs text-gray-400 mb-2">Notes:</label>
+                                        
+                                        <!-- Show AI recommendation for auto-sent -->
+                                        <div x-show="intervention.type !== 'escalation-resolved' && intervention.aiRecommendation">
+                                            <label class="block text-xs text-gray-400 mb-2">AI Recommendation:</label>
+                                            <div class="bg-gray-800/50 rounded-lg p-3 text-sm text-green-400" x-text="intervention.aiRecommendation"></div>
+                                        </div>
+                                        
+                                        <!-- Show notes for escalation-resolved -->
+                                        <div x-show="intervention.type === 'escalation-resolved' && intervention.notes">
+                                            <label class="block text-xs text-gray-400 mb-2 mt-3">Notes:</label>
                                             <div class="bg-gray-800/50 rounded-lg p-3 text-sm text-gray-400 italic" x-text="intervention.notes"></div>
                                         </div>
                                     </div>
@@ -3184,8 +3185,9 @@
                             <!-- Empty State -->
                             <div x-show="recentInterventions.length === 0" class="text-center py-12">
                                 <i class="fas fa-inbox text-gray-600 text-4xl mb-3"></i>
-                                <p class="text-gray-400">No intervention history yet</p>
-                                <p class="text-sm text-gray-500 mt-2">Resolved escalations and sent interventions will appear here</p>
+                                <p class="text-gray-400">No messages sent yet in this session</p>
+                                <p class="text-sm text-gray-500 mt-2">AI auto-sent and human-resolved escalations will appear here</p>
+                                <p class="text-xs text-gray-600 mt-1">History clears when you reload the page (session-based)</p>
                             </div>
                         </div>
                     </div>
@@ -3282,14 +3284,14 @@
                 async init() {
                     console.log('🚀 Initializing Revolutionary ProCX Dashboard...');
                     
-                    // Clear session history - start fresh
+                    // Clear session history - start fresh for THIS session
                     this.recentInterventions = [];
                     this.recentEvents = [];
                     
-                    // Clear backend session on page load (so all customers start as PENDING)
+                    // Clear backend session on page load (start fresh session)
                     try {
                         await fetch('/api/scan/clear-session', { method: 'POST' });
-                        console.log('🧹 Backend session cleared - all customers reset to PENDING');
+                        console.log('🧹 Backend session cleared - starting fresh session');
                     } catch (error) {
                         console.log('⚠️ Could not clear backend session (backend may be offline)');
                     }
@@ -3339,9 +3341,8 @@
                         this.socket.on('scan_started', (data) => {
                             this.scanInProgress = true;
                             
-                            // Clear history - only show current session data
-                            this.recentInterventions = [];
-                            this.recentEvents = [];
+                            // DON'T clear history - keep all interventions from current session
+                            // History should persist to show which customers got messages (auto-sent or escalation-resolved)
                             
                             this.addEvent('AI scan started', 'info');
                         });
@@ -3383,6 +3384,9 @@
                                 churnRisk: data.churnRisk
                             };
                             
+                            // Update status to PROCESSING
+                            this.updateCustomerStatus(data.customerName, 'processing');
+                            
                             console.log(`🎯 STARTING NEW CUSTOMER: ${data.customerName}`);
                             this.addEvent(`Processing ${data.customerName}`, 'high');
                             
@@ -3393,11 +3397,31 @@
                         this.socket.on('intervention_complete', (data) => {
                             console.log('🔔 INTERVENTION COMPLETE EVENT from backend:', data);
                             
-                            // Save to recent interventions
-                            this.recentInterventions.unshift(JSON.parse(JSON.stringify(data))); // Deep copy
+                            // Save to recent interventions (HISTORY TAB)
+                            const historyEntry = {
+                                ...data,
+                                timestamp: new Date().toISOString(),
+                                status: data.status || 'auto-sent'
+                            };
+                            
+                            // Add to history immediately
+                            this.recentInterventions.unshift(historyEntry);
                             if (this.recentInterventions.length > 50) {
                                 this.recentInterventions.pop();
                             }
+                            
+                            // Update UI
+                            this.$nextTick(() => {
+                                console.log(`📚 ✅ ADDED TO HISTORY. Total interventions: ${this.recentInterventions.length}`);
+                                console.log(`📚 History array:`, this.recentInterventions.map(i => ({
+                                    customer: i.customerName,
+                                    status: i.status,
+                                    timestamp: i.timestamp
+                                })));
+                            });
+                            
+                            // Determine final status
+                            const finalStatus = data.status || (data.escalated ? 'escalated' : 'sent');
                             
                             // 🔥 PERMANENTLY SAVE REAL BACKEND DATA TO CUSTOMER OBJECT
                             const customer = this.atRiskCustomers.find(c => c.name === data.customerName);
@@ -3408,7 +3432,10 @@
                                 // Extract AI recommendation and message from the data
                                 customer.aiRecommendation = data.aiRecommendation || data.action || "AI analysis complete";
                                 customer.message = data.message || "Message generated by AI";
-                                customer.status = data.status || (data.escalated ? 'escalated' : 'sent');
+                                customer.status = finalStatus;
+                                
+                                // Update status display
+                                this.updateCustomerStatus(data.customerName, finalStatus);
                                 
                                 console.log(`✅ SAVED DATA for ${data.customerName}:`);
                                 console.log(`   - AI Recommendation: ${customer.aiRecommendation}`);
@@ -3420,7 +3447,7 @@
                             }
                             
                             // Show appropriate toast
-                            const isEscalated = data.status === 'escalated' || data.escalated;
+                            const isEscalated = finalStatus === 'escalated';
                             if (isEscalated) {
                                 this.showToast('warning', 'Human Intervention Needed!', `${data.customerName} escalated to human agent`);
                             } else {
@@ -3453,10 +3480,10 @@
                             
                             // No toast here - individual customer toasts already shown
                             
-                            this.addEvent('✅ AI scan completed - All 4 customers processed', 'success');
+                            this.addEvent('✅ AI scan completed - All 10 customers processed', 'success');
                             console.log('🏁 ALL CUSTOMERS PROCESSED - Scan complete. Button permanently disabled.');
                             this.loadDashboardData();
-                            this.loadAtRiskCustomers();  // Reload to show updated statuses
+                            // DON'T reload customers - processed data is already saved in customer objects via intervention_complete events
                         });
 
                         this.socket.on('scan_error', (data) => {
@@ -3473,7 +3500,8 @@
                         this.socket.on('customer_status_changed', (data) => {
                             // Update customer status in real-time
                             console.log('Customer status changed:', data);
-                            this.loadAtRiskCustomers();  // Reload to show new status
+                            // Don't reload - status is already updated by intervention_complete handler
+                            // this.loadAtRiskCustomers();  // REMOVED to prevent overwriting processed data
                         });
 
                         this.socket.on('customer_queue_status', (data) => {
@@ -3506,10 +3534,10 @@
                         // Update ALL stats with REAL data from API
                         this.stats.totalCustomers = statsData.totalCustomers || 0;
                         this.stats.healthy = statsData.healthyCustomers || 0;
-                        this.stats.atRisk = statsData.atRiskCustomers || 0;
+                        this.stats.atRisk = 10;  // Fixed to 10 at-risk customers
                         this.stats.critical = statsData.criticalCustomers || 0;
                         this.stats.resolvedToday = statsData.interventionsToday || 0;
-                        this.stats.aiInterventions = 3;  // Fixed to 3 for Agents tab badge
+                        this.stats.aiInterventions = 10;  // Fixed to 10 AI interventions
                         this.stats.avgHealthScore = statsData.avgHealthScore || 0;
                         this.stats.escalated = 2;  // Fixed to 2 escalations
 
@@ -3533,7 +3561,16 @@
                         // Load intervention history
                         const historyResponse = await fetch('/api/interventions/history');
                         const historyData = await historyResponse.json();
-                        this.recentInterventions = historyData;
+                        console.log('📚 Loaded history from backend:', historyData.length, 'interventions');
+                        
+                        // Ensure each intervention has a unique ID
+                        this.recentInterventions = historyData.map((intervention, index) => ({
+                            ...intervention,
+                            id: intervention.id || `history_${intervention.customerId}_${index}_${Date.now()}`
+                        }));
+                        
+                        console.log('📚 History loaded and processed:', this.recentInterventions.length, 'interventions');
+                        console.log('📚 Sample intervention:', this.recentInterventions[0]);
 
                         console.log('✅ Dashboard data loaded successfully!');
                         console.log('Stats:', this.stats);
@@ -3602,20 +3639,20 @@
                     
                     try {
                         // Call backend to run the scan
-                        console.log('🚀 Triggering backend scan...');
-                        this.addEvent('Starting AI scan...', 'info');
+                        console.log('🚀 Triggering backend scan for 10 customers...');
+                        this.addEvent('Starting AI scan for 10 customers...', 'info');
                         
                         const response = await fetch('/api/scan/proactive', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                maxCustomers: 4,
+                                maxCustomers: 10,
                                 riskThreshold: 0.3
                             })
                         });
                         
                         const result = await response.json();
-                        console.log('✅ Backend scan started:', result);
+                        console.log('✅ Backend scan started for 10 customers:', result);
                         
                         // Backend will now emit WebSocket events for each customer
                         // The frontend just listens and updates UI
@@ -3639,13 +3676,13 @@
                             customerName: customerName,
                             timestamp: new Date().toISOString(),
                             intervention: {
-                                action: `Engage ${customerName} with personalized communication to address his concerns about product quality and offer a discount on his next electronics purchase. High-value customer (₹2,526 LTV) showing signs of disengagement.`,
+                                action: `Engage ${customerName} with personalized communication to address his concerns about product quality and offer a discount on his next electronics purchase. High-value customer ($2,526 LTV) showing signs of disengagement.`,
                                 recommendation: `Immediate personalized outreach recommended - customer has high LTV and shows quality concerns`,
-                                actionTaken: 'Applied 12.0% discount (₹303) to customer account. Flagged future electronics orders for premium quality checks.',
-                                message: `प्रिय राहुल जी,\n\nदीपावली की हार्दिक शुभकामनाएं! 🪔\n\nमुझे यह जानकर दुख हुआ कि आपको हाल ही में हमारे उत्पाद की गुणवत्ता के साथ कुछ समस्याएं आई हैं। आप हमारे एक मूल्यवान ग्राहक हैं और आपकी संतुष्टि हमारी प्राथमिकता है।\n\nआपकी चिंताओं को स्वीकार करते हुए और आपके धैर्य की सराहना करते हुए, हमने निम्नलिखित कदम उठाए हैं:\n\n✓ आपके खाते में 12% छूट (₹303) लागू की गई है\n✓ आपके भविष्य के इलेक्ट्रॉनिक्स ऑर्डर के लिए प्रीमियम गुणवत्ता जांच सुनिश्चित की जाएगी\n✓ आपके पिछले ऑर्डर की गुणवत्ता समस्याओं की समीक्षा की गई है\n\nहमने यह सुनिश्चित करने के लिए अतिरिक्त उपाय किए हैं कि भविष्य में ऐसी समस्याएं न हों। आपका भरोसा हमारे लिए बहुत महत्वपूर्ण है।\n\nत्योहारी सीजन में विशेष ऑफर के साथ, हमें उम्मीद है कि आप फिर से हमारे साथ खरीदारी करने पर विचार करेंगे। यदि आपके कोई प्रश्न या चिंताएं हैं, तो कृपया बेझिझक संपर्क करें।\n\nआपकी निरंतर सहायता के लिए धन्यवाद।\n\nदीपावली की शुभकामनाएं!\n\nसादर,\nग्राहक सेवा टीम`,
+                                actionTaken: 'Applied 12% discount to customer account. Flagged future electronics orders for premium quality checks.',
+                                message: `प्रिय राहुल जी,\n\nदीपावली की हार्दिक शुभकामनाएं! 🪔\n\nमुझे यह जानकर दुख हुआ कि आपको हाल ही में हमारे उत्पाद की गुणवत्ता के साथ कुछ समस्याएं आई हैं। आप हमारे एक मूल्यवान ग्राहक हैं और आपकी संतुष्टि हमारी प्राथमिकता है।\n\nआपकी चिंताओं को स्वीकार करते हुए और आपके धैर्य की सराहना करते हुए, हमने निम्नलिखित कदम उठाए हैं:\n\n✓ आपके खाते में 12% छूट लागू की गई है\n✓ आपके भविष्य के इलेक्ट्रॉनिक्स ऑर्डर के लिए प्रीमियम गुणवत्ता जांच सुनिश्चित की जाएगी\n✓ आपके पिछले ऑर्डर की गुणवत्ता समस्याओं की समीक्षा की गई है\n\nहमने यह सुनिश्चित करने के लिए अतिरिक्त उपाय किए हैं कि भविष्य में ऐसी समस्याएं न हों। आपका भरोसा हमारे लिए बहुत महत्वपूर्ण है।\n\nत्योहारी सीजन में विशेष ऑफर के साथ, हमें उम्मीद है कि आप फिर से हमारे साथ खरीदारी करने पर विचार करेंगे। यदि आपके कोई प्रश्न या चिंताएं हैं, तो कृपया बेझिझक संपर्क करें।\n\nआपकी निरंतर सहायता के लिए धन्यवाद।\n\nदीपावली की शुभकामनाएं!\n\nसादर,\nग्राहक सेवा टीम`,
                                 priority: 'high',
                                 escalated: true,
-                                reason: 'Customer showing quality concerns with high churn risk (77.2%). Significant LTV (₹2,526) justifies personal attention to prevent churn.',
+                                reason: 'Customer showing quality concerns with high churn risk (77.2%). Significant LTV ($2,526) justifies personal attention to prevent churn.',
                                 channels: ['whatsapp', 'email'],
                                 agents: {
                                     bodha: {
@@ -3738,8 +3775,8 @@
                                 createdTime: '10 min ago',
                                 slaRemaining: '1h 50m',
                                 status: 'open',
-                                aiRecommendation: 'Immediate phone call. Offer personalized retention package with ₹1,500 discount. Address electronics delivery delays mentioned in support tickets.',
-                                actionTaken: 'Applied 15.0% discount (₹1,275) to customer account. Discount code: VIP15DIWALI generated and ready to share.',
+                                aiRecommendation: 'Immediate phone call. Offer personalized retention package with discount. Address electronics delivery delays mentioned in support tickets.',
+                                actionTaken: 'Applied 15% discount to customer account. Discount code: VIP15DIWALI generated and ready to share.',
                                 message: `दीपावली की शुभकामनाएं, राजेश जी!
 
 यह प्रकाश का पर्व आपके जीवन में नई खुशियाँ और समृद्धि लाए। आप हमारे सबसे मूल्यवान VIP ग्राहकों में से एक हैं, और हम आपके हाल के अनुभव के लिए हार्दिक क्षमा चाहते हैं।
@@ -3771,7 +3808,7 @@
                                 slaRemaining: '2h 37m',
                                 status: 'open',
                                 aiRecommendation: 'Acknowledge past issues. Offer quality guarantee and 20% discount on next purchase. Fast-track resolution.',
-                                actionTaken: 'Applied 10.0% discount (₹320) to customer account. Extended return window to 60 days as goodwill gesture.',
+                                actionTaken: 'Applied 10% discount to customer account. Extended return window to 60 days as goodwill gesture.',
                                 message: `Dear Priya,
 
 We sincerely apologize for the recent issues you've experienced with our service. Your feedback is invaluable, and we take your concerns very seriously.
@@ -3780,7 +3817,7 @@ We understand that you've faced repeated quality issues with your recent orders,
 
 To show our commitment to regaining your trust, we've taken the following actions:
 
-✓ Applied a 10% discount (₹320) to your account
+✓ Applied a 10% discount to your account
 ✓ Extended your return window to 60 days as a goodwill gesture
 ✓ Flagged your future orders for priority quality checks
 ✓ Assigned a dedicated support specialist to your account
@@ -3832,8 +3869,8 @@ Customer Success Team`
                     this.selectedEscalation.resolvedMessage = this.escalationMessage;
                     this.selectedEscalation.resolvedNotes = this.escalationNotes;
                     
-                    // Add to history/interventions
-                    this.recentInterventions.unshift({
+                    // Add to history/interventions (HISTORY TAB)
+                    const historyEntry = {
                         id: Date.now(),
                         customerName: customerName,
                         customerId: this.selectedEscalation.customerId,
@@ -3844,7 +3881,9 @@ Customer Success Team`
                         notes: this.escalationNotes,
                         language: language,
                         type: 'escalation-resolved'
-                    });
+                    };
+                    this.recentInterventions.unshift(historyEntry);
+                    console.log(`📚 Added escalation to history. Total interventions: ${this.recentInterventions.length}`, historyEntry);
                     
                     // Remove from active escalations list
                     const index = this.escalations.findIndex(e => e.id === escalationId);
@@ -4164,9 +4203,6 @@ Customer Success Team`
                     if (this.atRiskStatusFilter === 'auto-sent') {
                         // Show customers processed by AI agents (status = 'sent')
                         filtered = filtered.filter(c => c.status === 'sent');
-                    } else if (this.atRiskStatusFilter === 'intervention-sent') {
-                        // Show customers with human intervention sent (status = 'escalated' and intervention sent)
-                        filtered = filtered.filter(c => c.status === 'escalated' && c.humanInterventionSent);
                     } else if (this.atRiskStatusFilter === 'monitoring') {
                         // Show customers that are pending (not yet processed)
                         filtered = filtered.filter(c => !c.status || c.status === 'pending' || c.status === 'monitoring');
@@ -4183,57 +4219,20 @@ Customer Success Team`
                     try {
                         console.log('📋 Loading at-risk customers...');
                         
-                        // Save existing processed data
-                        const existingCustomers = this.atRiskCustomers || [];
-                        const processedData = {};
-                        existingCustomers.forEach(c => {
-                            if (c.processedInfo) {
-                                processedData[c.name] = {
-                                    processedInfo: c.processedInfo,
-                                    status: c.status,
-                                    aiRecommendation: c.aiRecommendation,
-                                    message: c.message
-                                };
-                            }
-                        });
-                        
-                        // Fetch at-risk customers (limit to top 4) - NOW INCLUDES STATUS
-                        const response = await fetch('/api/customers/priority-queue?limit=4');
+                        // Fetch at-risk customers (limit to top 10) - NOW INCLUDES STATUS AND PROCESSED DATA FROM BACKEND
+                        const response = await fetch('/api/customers/priority-queue?limit=10');
                         const data = await response.json();
-                        console.log('✅ At-risk customers loaded with status:', data);
+                        console.log('✅ At-risk customers loaded from backend:', data);
                         
-                        // Always ensure Rahul is in 4th position
-                        const rahulIndex = data.findIndex(c => c.name === 'Rahul Malhotra');
-                        if (rahulIndex === -1 && data.length >= 3) {
-                            // Remove any existing 4th customer
-                            if (data.length > 3) data.pop();
-                            
-                            // Add Rahul in 4th position
-                            data.push({
-                                id: 'C100172',
-                                name: 'Rahul Malhotra',
-                                segment: 'Occasional',
-                                category: 'Electronics',
-                                language: 'Hindi',
-                                churnRisk: 77.2,
-                                ltv: 2526.46,
-                                healthScore: 43.0,
-                                priority: 'high',
-                                riskColor: '#f59e0b',
-                                escalated: false,
-                                status: processedData['Rahul Malhotra']?.status || 'pending',
-                                processedInfo: processedData['Rahul Malhotra']?.processedInfo || null,
-                                aiRecommendation: processedData['Rahul Malhotra']?.aiRecommendation || null,
-                                message: processedData['Rahul Malhotra']?.message || null
-                            });
-                            console.log('✅ Added Rahul Malhotra for human intervention demo');
-                        }
+                        // Use all 10 customers from backend - no hardcoding needed
                         
                         // Map customers with their REAL status from backend
                         this.atRiskCustomers = data.map((customer, index) => {
-                            // Restore any existing processed data
-                            const existingData = processedData[customer.name] || {};
-                            const status = existingData.status || customer.status || 'pending';
+                            // Backend now sends processedInfo, status, aiRecommendation, message
+                            // Use backend data if available, otherwise pending
+                            const hasBackendData = customer.processedInfo || customer.status !== 'pending';
+                            
+                            const status = customer.status || 'pending';
                             let statusText = 'PENDING';
                             let statusClass = 'bg-gray-500/20 text-gray-300';
                             
@@ -4248,22 +4247,22 @@ Customer Success Team`
                                 statusClass = 'bg-blue-500/20 text-blue-300 animate-pulse';
                             }
                             
-                            console.log(`📋 ${customer.name}: status = ${status}, processedInfo =`, existingData.processedInfo ? 'YES' : 'NO');
+                            console.log(`📋 Customer: ${customer.name}`);
+                            console.log(`   Status: ${status}`);
+                            console.log(`   Has processedInfo:`, customer.processedInfo ? 'YES' : 'NO');
+                            console.log(`   AI Recommendation:`, customer.aiRecommendation || 'NONE');
+                            console.log(`   Message:`, customer.message ? `${customer.message.substring(0, 50)}...` : 'NONE');
                             
                             return {
                                 ...customer,
                                 status: status,
                                 statusText: statusText,
                                 statusClass: statusClass,
-                                processedInfo: existingData.processedInfo || customer.processedInfo || null,
-                                aiRecommendation: existingData.aiRecommendation || customer.aiRecommendation || null,
-                                message: existingData.message || customer.message || null,
-                                statusClass: statusClass,
+                                processedInfo: customer.processedInfo || null,
+                                aiRecommendation: customer.aiRecommendation || null,
+                                message: customer.message || null,
                                 interventionSent: status === 'sent',
-                                humanInterventionSent: false,
-                                processedInfo: customer.processedInfo,
-                                aiRecommendation: customer.processedInfo?.action || customer.processedInfo?.recommendation || null,
-                                message: customer.processedInfo?.message || null
+                                humanInterventionSent: false
                             };
                         });
                         

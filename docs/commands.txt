@@ -1,11 +1,46 @@
-# 1. Dashboard (30 sec)
+# ========================================
+# ProCX - Command Reference
+# ========================================
+
+# -----------------------------------------
+# 🎨 WEB UI 
+# -----------------------------------------
+
+# Start Web Dashboard with Live Processing
+python api/backend_api.py
+# Then open: http://localhost:5000
+
+# Alternative: Realtime Demo API
+python api/realtime_demo_api.py
+# Then open: http://localhost:5000
+
+
+# -----------------------------------------
+# 🖥️ CLI MODE
+# -----------------------------------------
+
+# 1. Dashboard
 python main.py --dashboard
 
-# 2. Real-time Event (2 min)
+# 2. Real-time Event
 python demo_realtime.py
 
-# 3. Batch Processing (2 min)
+# 3. Batch Processing 
 python main.py --interventions --max-interventions 2
 
-# 4. Escalation Scenario (2 min)
+# 4. Escalation Scenario 
 python demo_escalation.py
+
+
+# -----------------------------------------
+# 📊 ADDITIONAL OPTIONS
+# -----------------------------------------
+
+# Process specific number of customers
+python main.py --interventions --max-interventions 10
+
+# Process with custom risk threshold
+python main.py --interventions --min-risk 0.7
+
+# View specific customer details
+python main.py --customer-id C100141
